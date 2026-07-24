@@ -1688,16 +1688,18 @@ TABS['Grammaire']=()=>`
    <div class="bar"><i id="qbar"></i></div><div id="qbox"></div><div id="qfb" class="muted" style="margin-top:8px"></div>
    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="qnext" onclick="qNext()" style="display:none">${esc('Suivant')} ${icon('arrow-r')}</button><button class="btn ghost" onclick="qStart()">${icon('refresh')} Recommencer</button><span id="qscore" class="muted" style="align-self:center"></span></div></div>`;
 let qi=0,qscore=0,qorder=[];
-function qStart(){qi=0;qscore=0;qorder=QUIZ.map((_,i)=>i);for(let i=qorder.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[qorder[i],qorder[j]]=[qorder[j],qorder[i]];}qDraw();}
+function qSaveSess(){saveSession('quiz',{qi:qi,qscore:qscore,qorder:qorder});}
+function qStart(){qi=0;qscore=0;qorder=QUIZ.map((_,i)=>i);for(let i=qorder.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[qorder[i],qorder[j]]=[qorder[j],qorder[i]];}clearSession('quiz');qDraw();}
+function qRestore(){var ss=loadSession('quiz');if(ss&&ss.qorder&&ss.qorder.length&&ss.qi<ss.qorder.length){qi=ss.qi;qscore=ss.qscore;qorder=ss.qorder;qDraw();return true;}return false;}
 function qDraw(){const box=document.getElementById('qbox');if(!box)return;document.getElementById('qfb').textContent='';document.getElementById('qnext').style.display='none';
   document.getElementById('qbar').style.width=(qi/QUIZ.length*100)+'%';document.getElementById('qscore').textContent=`Score : ${qscore}/${QUIZ.length}`;
-  if(qi>=QUIZ.length){box.innerHTML=`<div class="big" style="font-size:22px">Fini ! 🎉 ${qscore}/${QUIZ.length}</div><p class="muted">${qscore>=16?'Excellent — bases solides.':qscore>=11?'Bien — revois les erreurs.':'Refais le quiz 2–3 fois.'}</p>`;document.getElementById('qbar').style.width='100%';saveQuiz(Math.round(qscore/QUIZ.length*100));if(EN)applyEN(box.parentElement||box);return;}
+  if(qi>=QUIZ.length){box.innerHTML=`<div class="big" style="font-size:22px">Fini ! 🎉 ${qscore}/${QUIZ.length}</div><p class="muted">${qscore>=16?'Excellent — bases solides.':qscore>=11?'Bien — revois les erreurs.':'Refais le quiz 2–3 fois.'}</p>`;document.getElementById('qbar').style.width='100%';saveQuiz(Math.round(qscore/QUIZ.length*100));clearSession('quiz');if(EN)applyEN(box.parentElement||box);return;}
   const [q,opts]=QUIZ[qorder[qi]];box.innerHTML=`<div class="q" style="font-size:16px;margin-bottom:8px">${esc(q)}</div>`+opts.map((o,i)=>`<button class="quizopt" onclick="qAns(${i},this)">${esc(o)}</button>`).join('');if(EN)applyEN(box.parentElement||box);}
 function qAns(i,btn){const[,,correct,exp]=QUIZ[qorder[qi]];document.querySelectorAll('.quizopt').forEach(b=>b.disabled=true);
   if(i===correct){btn.classList.add('correct');qscore++;document.getElementById('qfb').innerHTML='<span class="ok">✓ Correct.</span> '+esc(exp);}
   else{btn.classList.add('wrong');document.querySelectorAll('.quizopt')[correct].classList.add('correct');document.getElementById('qfb').innerHTML='<span style="color:var(--bad)">✗</span> '+esc(exp);}
-  document.getElementById('qscore').textContent=`Score : ${qscore}/${QUIZ.length}`;document.getElementById('qnext').style.display='inline-block';if(EN)applyEN(document.getElementById('qfb').parentElement||document.getElementById('qfb'));}
-function qNext(){qi++;qDraw();}
+  document.getElementById('qscore').textContent=`Score : ${qscore}/${QUIZ.length}`;document.getElementById('qnext').style.display='inline-block';qSaveSess();if(EN)applyEN(document.getElementById('qfb').parentElement||document.getElementById('qfb'));}
+function qNext(){qi++;qSaveSess();qDraw();}
 
 /* ==================== CHIFFRES & HEURE ==================== */
 const NUM=[[0,'zéro'],[1,'un'],[2,'deux'],[3,'trois'],[4,'quatre'],[5,'cinq'],[6,'six'],[7,'sept'],[8,'huit'],[9,'neuf'],[10,'dix'],[11,'onze'],[12,'douze'],[13,'treize'],[14,'quatorze'],[15,'quinze'],[16,'seize'],[17,'dix-sept'],[18,'dix-huit'],[19,'dix-neuf'],[20,'vingt'],[30,'trente'],[40,'quarante'],[50,'cinquante'],[60,'soixante'],[70,'soixante-dix'],[80,'quatre-vingts'],[90,'quatre-vingt-dix'],[100,'cent']];
@@ -2517,15 +2519,17 @@ const BBEX=[
  {lv:3,en:'I am going to call you tomorrow.',fr:'Je vais t’appeler demain',note:'Object pronoun sits before the infinitive.'},
 ];
 let bbI=0,bbTray=[],bbBank=[],bbDragI=null,bbMode='build',bbDone=false;
+function bbSaveSess(){saveSession('bb',{bbI:bbI,bbTray:bbTray,bbBank:bbBank,bbDone:bbDone});}
 function bbNorm(s){return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
-  .replace(/[’']/g,'\'').replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim();}
+  .replace(/['']/g,'\'').replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim();}
 function bbEx(){return BBEX[bbI%BBEX.length];}
 function bbLoad(i){
   bbI=(i+BBEX.length)%BBEX.length;const e=bbEx();bbTray=[];bbDone=false;
   bbBank=e.b?[...e.b,...(e.d||[])].map((x,k)=>({t:x[0],ty:x[1],k})):[];
   for(let j=bbBank.length-1;j>0;j--){const r=Math.random()*(j+1)|0;[bbBank[j],bbBank[r]]=[bbBank[r],bbBank[j]];}
-  bbRender();
+  bbSaveSess();bbRender();
 }
+function bbRestore(){var ss=loadSession('bb');if(ss&&ss.bbTray){bbI=ss.bbI||0;bbTray=ss.bbTray;bbBank=ss.bbBank||[];bbDone=ss.bbDone||false;return true;}return false;}
 function bbChip(b,where,idx){
   const c=BBT[b.ty]||BBT.phr;
   return `<button class="bbchip" draggable="${where==='tray'}" data-i="${idx}"
@@ -2533,15 +2537,15 @@ function bbChip(b,where,idx){
     onclick="${where==='bank'?`bbAdd(${idx})`:`bbRemove(${idx})`}"
     style="--bc:${c.c}" title="${esc(c.l)}"><span class="bbdot"></span>${esc(b.t)}</button>`;
 }
-function bbAdd(i){const b=bbBank.splice(i,1)[0];if(b){bbTray.push(b);bbRender();}}
-function bbRemove(i){const b=bbTray.splice(i,1)[0];if(b&&!b.custom)bbBank.push(b);bbRender();}
-function bbDrop(e,i){e.preventDefault();if(bbDragI==null||bbDragI===i)return;const b=bbTray.splice(bbDragI,1)[0];bbTray.splice(i,0,b);bbDragI=null;bbRender();}
+function bbAdd(i){const b=bbBank.splice(i,1)[0];if(b){bbTray.push(b);bbSaveSess();bbRender();}}
+function bbRemove(i){const b=bbTray.splice(i,1)[0];if(b&&!b.custom)bbBank.push(b);bbSaveSess();bbRender();}
+function bbDrop(e,i){e.preventDefault();if(bbDragI==null||bbDragI===i)return;const b=bbTray.splice(bbDragI,1)[0];bbTray.splice(i,0,b);bbDragI=null;bbSaveSess();bbRender();}
 function bbCustom(){
   const inp=document.getElementById('bbcustom');if(!inp)return;const v=inp.value.trim();if(!v)return;
   const ty=(document.getElementById('bbtype')||{}).value||'phr';
-  bbTray.push({t:v,ty,custom:true});inp.value='';bbRender();inp.focus();
+  bbTray.push({t:v,ty,custom:true});inp.value='';bbSaveSess();bbRender();inp.focus();
 }
-function bbClear(){bbLoad(bbI);}
+function bbClear(){clearSession('bb');bbLoad(bbI);}
 function bbCheck(){
   const e=bbEx(),said=bbNorm(bbTray.map(b=>b.t).join(' ')),want=bbNorm(e.fr);
   const fb=document.getElementById('bbfb');if(!fb)return;
@@ -3391,7 +3395,7 @@ function show(name){
   if(first||reload.includes(name)){t.innerHTML=TABS[name]();t.dataset.loaded=1;}
   injectFS(t);
   if(name==='Vocabulaire'&&first)initFC();
-  if(name==='Grammaire'&&first)qStart();
+  if(name==='Grammaire'&&first){if(!qRestore())qStart();}
   if(name==='Prononciation'&&first)echoInit();
   if(name==='Chiffres & Heure')setTimeout(newClock,30);
   window.scrollTo(0,0);
@@ -3402,7 +3406,7 @@ document.body.insertAdjacentHTML('beforeend',aiPanelHTML());
 aiPaint(); aiSelInit(); if(aiKey())aiDiscover();
 {const ss=loadSession('scrmini');if(ss){scrTiles=ss.tiles||[];scrPick=ss.pick||[];scrScore=ss.score||0;scrFound=ss.found||[];}};
 if(!scrTiles.length)scrDeal();
-bbLoad(0);            // deal the first Building-Blocks exercise
+if(!bbRestore())bbLoad(0);            // deal the first Building-Blocks exercise
 show('Départ');
 if(EN){const btn=document.getElementById('enToggle');if(btn){btn.classList.add('active');btn.innerHTML=icon('globe')+' Français';}applyEN(document.body);}
 initAuth();
