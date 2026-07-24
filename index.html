@@ -751,6 +751,10 @@ function rehydrate(){
   if(ss&&ss.scrTiles&&ss.scrTiles.length){scrTiles=ss.scrTiles;scrPick=ss.scrPick||[];scrScore=ss.scrScore||0;scrFound=ss.scrFound||[];}
   var sx=loadSession('smax');
   if(sx&&sx.grid&&sx.grid.length){SMAX.grid=sx.grid;SMAX.rack=sx.rack||[];SMAX.placed=sx.placed||[];SMAX.score=sx.score||0;SMAX.turn=sx.turn||1;SMAX.vs=sx.vs||'solo';SMAX.aiRack=sx.aiRack||[];SMAX.aiScore=sx.aiScore||0;SMAX.lastAI=sx.lastAI||[];SMAX.aiWords=sx.aiWords||[];SMAX.sel=null;SMAX.msg='';SMAX.sosNote='';}
+  var sq=loadSession('quiz');
+  if(sq&&sq.qorder&&sq.qorder.length&&sq.qi<sq.qorder.length){qi=sq.qi;qscore=sq.qscore;qorder=sq.qorder;}
+  var sb=loadSession('bb');
+  if(sb&&sb.bbTray){bbI=sb.bbI||0;bbTray=sb.bbTray;bbBank=sb.bbBank||[];bbDone=sb.bbDone||false;}
   try{renderStart();}catch(e){}
   try{if(typeof gamesRender==='function')gamesRender();}catch(e){}
   try{if(typeof aiPaint==='function'&&aiKey())aiPaint();}catch(e){}
