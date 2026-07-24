@@ -59,7 +59,7 @@
     padding:7px 12px;border-radius:999px;cursor:pointer;font-size:13px}
   nav button.active{background:var(--accent);color:#1a1300;border-color:var(--accent);font-weight:700}
   main{max-width:940px;margin:0 auto;padding:18px 16px 90px}
-  .tab{display:none}
+  .tab{display:none;position:relative}
   .tab.active{display:block;animation:f .2s}
   @keyframes f{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
@@ -367,7 +367,7 @@
   .th-streak{flex:none;min-width:150px;padding-right:26px;border-right:2px solid rgba(42,22,0,.16);
     display:flex;flex-direction:column;justify-content:center}
   .th-num{font-size:76px;line-height:.9;font-weight:900;letter-spacing:-3px;font-variant-numeric:tabular-nums;
-    display:inline-flex;align-items:center;gap:6px}
+    display:inline-flex;align-items:center;gap:0}
   .th-flame{display:inline-flex}
   .th-flame .ic{width:.86em;height:.86em;stroke:none;fill:#ff5a1f;filter:drop-shadow(0 0 10px rgba(255,120,20,.7));
     animation:flamefx 1.7s var(--ease) infinite}
@@ -401,7 +401,7 @@
   }
 
   /* ============ v5: BUILDING BLOCKS · SCRABBLE · MISSION · ASK AI ============ */
-  .bbchip{display:inline-flex;align-items:center;gap:7px;background:color-mix(in srgb,var(--bc) 16%,var(--card2));
+  .bbchip{display:inline-flex;align-items:center;gap:7px;background:color-mix(in srgb,var(--bc) 24%,var(--card2));
     border:1px solid color-mix(in srgb,var(--bc) 55%,transparent);color:var(--ink);border-radius:10px;
     padding:9px 13px;font-size:var(--f-md);font-weight:700;cursor:pointer;transition:transform .12s var(--ease),box-shadow .12s}
   .bbchip:hover{transform:translateY(-2px);box-shadow:0 6px 16px color-mix(in srgb,var(--bc) 30%,transparent)}
@@ -519,7 +519,53 @@
   .morebtn:hover{background:var(--card2);border-style:solid;border-color:var(--fr);color:var(--ink)}
   .morebtn .ic{width:15px;height:15px}
   @media(max-width:640px){.smboard{max-width:100%;gap:2px;padding:4px}}
+  .fs-btn{position:absolute;top:4px;right:4px;background:var(--card2);border:1px solid var(--line);
+    border-radius:8px;padding:5px;cursor:pointer;opacity:.35;transition:opacity .15s;z-index:5;color:var(--ink);line-height:0}
+  .fs-btn:hover{opacity:.85}
+  .fs-btn .ic{width:16px;height:16px}
+  .tab:fullscreen{background:var(--bg);padding:28px 24px;overflow-y:auto}
+  .tab:-webkit-full-screen{background:var(--bg);padding:28px 24px;overflow-y:auto}
+  .hamburger{display:none;background:none;border:1px solid var(--line2);color:var(--ink);cursor:pointer;
+    padding:7px;border-radius:8px;line-height:0}
+  .hamburger .ic{width:20px;height:20px}
+  @media(max-width:768px){
+    .hamburger{display:flex;align-items:center;justify-content:center}
+    .chromebar{display:none;position:absolute;top:100%;left:0;right:0;
+      background:var(--bg2);border-bottom:1px solid var(--line);z-index:25;
+      box-shadow:0 12px 32px rgba(0,0,0,.4)}
+    header.menu-open .chromebar{display:block}
+    header.menu-open #subnav{display:none}
+    .chromebar .wrap{padding-top:14px;padding-bottom:14px}
+    .chromebar nav{flex-direction:column;gap:4px}
+    .chromebar nav button{width:100%;text-align:left;border-radius:10px;padding:11px 16px;font-size:var(--f-md)}
+    .voicerow{font-size:var(--f-sm)}
+  }
+  /* ---- Auth overlay ---- */
+  .auth-overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .auth-card{background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:36px 32px 28px;
+    width:min(400px,90vw);text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+  .auth-card h2{margin:0 0 6px;font-size:var(--f-lg);color:var(--ink)}
+  .auth-card .auth-sub{color:var(--muted);font-size:var(--f-sm);margin-bottom:22px}
+  .auth-card input{width:100%;padding:11px 14px;border:1px solid var(--line2);border-radius:10px;
+    background:var(--bg2);color:var(--ink);font-size:var(--f-md);margin-bottom:10px;box-sizing:border-box}
+  .auth-card input:focus{outline:none;border-color:var(--fr)}
+  .auth-card .btn-auth{width:100%;padding:12px;border:none;border-radius:10px;font-size:var(--f-md);
+    font-weight:700;cursor:pointer;transition:all .15s}
+  .auth-card .btn-primary{background:var(--fr);color:#fff}
+  .auth-card .btn-primary:hover{filter:brightness(1.15)}
+  .auth-card .btn-ghost{background:transparent;color:var(--accent2);border:1px dashed var(--line2);margin-top:8px}
+  .auth-card .btn-ghost:hover{border-color:var(--fr);color:var(--ink)}
+  .auth-card .auth-toggle{margin-top:14px;font-size:var(--f-sm);color:var(--muted)}
+  .auth-card .auth-toggle a{color:var(--accent);cursor:pointer;text-decoration:underline}
+  .auth-card .auth-err{color:var(--bad);font-size:var(--f-sm);margin:8px 0 0;min-height:1em}
+  .auth-card .auth-ok{color:var(--good);font-size:var(--f-sm);margin:8px 0 0}
+  .user-bar{display:flex;align-items:center;gap:8px;font-size:var(--f-sm);color:var(--muted)}
+  .user-bar button{padding:4px 10px;font-size:11px;border-radius:8px;background:var(--card2);
+    border:1px solid var(--line2);color:var(--ink);cursor:pointer}
+  .user-bar button:hover{border-color:var(--fr)}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -573,6 +619,11 @@
  <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></symbol>
  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3s5 4 5 9a5 5 0 01-10 0c0-2 1-3 1-3s.5 1.5 2 2c0-2.5-1-4-1-5.5S12 3 12 3z"/></symbol>
  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></symbol>
+ <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+ <symbol id="i-chevron-up" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></symbol>
+ <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+ <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol>
+ <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></symbol>
 </defs></svg>
 <header>
   <div class="appbar"><div class="wrap">
@@ -580,6 +631,7 @@
     <div class="rightbtns">
       <button id="themeToggle" onclick="toggleTheme()" title="Basculer thème clair/sombre" aria-label="Toggle light/dark theme"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg><span id="themeLabel">Sombre</span></button>
       <button id="enToggle" onclick="toggleEN()" title="Preview the app in English" aria-label="Toggle English preview"><svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg> English</button>
+      <button class="hamburger" onclick="toggleMenu()" aria-label="Toggle menu"><svg class="ic" aria-hidden="true"><use href="#i-menu"/></svg></button>
     </div>
   </div></div>
   <div class="chromebar"><div class="wrap">
@@ -605,7 +657,111 @@
 </header>
 <main></main>
 
+<div id="authOverlay" class="auth-overlay" style="display:none">
+  <div class="auth-card">
+    <h2>🇫🇷 Allez!</h2>
+    <p class="auth-sub">Connectez-vous pour sauvegarder votre progression</p>
+    <input id="authEmail" type="email" placeholder="Email" autocomplete="email">
+    <input id="authPass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+    <button class="btn-auth btn-primary" id="authSubmit" onclick="authDo()">Se connecter</button>
+    <button class="btn-auth btn-ghost" onclick="authSkip()">Continuer sans compte</button>
+    <div class="auth-toggle" id="authToggle">Pas de compte ? <a onclick="authFlip()">Créer un compte</a></div>
+    <div class="auth-err" id="authErr"></div>
+  </div>
+</div>
+
 <script>
+/* ==================== SUPABASE AUTH + CLOUD SYNC ==================== */
+var SUPA_URL='https://arpfnqisuiqasjrjdelr.supabase.co';
+var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFycGZucWlzdWlxYXNqcmpkZWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4OTEzNDIsImV4cCI6MjEwMDQ2NzM0Mn0.p_2bxR-LjPvO2yiEIarr_3MVyf_wzyfKlGEd4Zt8aUo';
+var SB=null,SB_USER=null,SB_TOKEN=null,_syncTimer=null;
+try{SB=window.supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){console.warn('Supabase init failed',e);}
+var authMode='login';
+function authFlip(){
+  authMode=authMode==='login'?'signup':'login';
+  document.getElementById('authSubmit').textContent=authMode==='login'?'Se connecter':'Créer un compte';
+  document.getElementById('authToggle').innerHTML=authMode==='login'
+    ?'Pas de compte ? <a onclick="authFlip()">Créer un compte</a>'
+    :'Déjà un compte ? <a onclick="authFlip()">Se connecter</a>';
+  document.getElementById('authErr').textContent='';
+}
+async function authDo(){
+  var email=document.getElementById('authEmail').value.trim();
+  var pass=document.getElementById('authPass').value;
+  var errEl=document.getElementById('authErr');
+  errEl.textContent='';
+  if(!email||!pass){errEl.textContent='Email et mot de passe requis.';return;}
+  try{
+    var res;
+    if(authMode==='signup'){
+      res=await SB.auth.signUp({email:email,password:pass});
+      if(res.error)throw res.error;
+      errEl.className='auth-ok';errEl.textContent='Compte créé ! Vérifiez votre email si demandé.';
+    }else{
+      res=await SB.auth.signInWithPassword({email:email,password:pass});
+      if(res.error)throw res.error;
+    }
+    SB_USER=res.data.user||(res.data.session?res.data.session.user:null);
+    SB_TOKEN=res.data.session?res.data.session.access_token:null;
+    document.getElementById('authOverlay').style.display='none';
+    await cloudLoad();
+    renderUserBar();
+  }catch(e){errEl.className='auth-err';errEl.textContent=e.message||'Erreur inconnue.';}
+}
+function authSkip(){document.getElementById('authOverlay').style.display='none';SB_USER=null;renderUserBar();}
+function renderUserBar(){
+  var bar=document.getElementById('userBar');
+  if(!bar){bar=document.createElement('div');bar.id='userBar';bar.className='user-bar';
+    document.querySelector('.rightbtns').prepend(bar);}
+  if(SB_USER){bar.innerHTML='<span>'+SB_USER.email+'</span><button onclick="authLogout()">Déconnexion</button>';}
+  else{bar.innerHTML='<button onclick="showAuth()">Connexion</button>';}
+}
+function showAuth(){document.getElementById('authOverlay').style.display='flex';}
+async function authLogout(){if(SB)await SB.auth.signOut();SB_USER=null;SB_TOKEN=null;renderUserBar();}
+function deepMerge(local,cloud){
+  var m={};var k;for(k in cloud)m[k]=cloud[k];for(k in local)m[k]=local[k];
+  if(cloud.days||local.days){m.days={};for(k in cloud.days)m.days[k]=cloud.days[k];for(k in local.days)m.days[k]=Math.max(m.days[k]||0,local.days[k]);}
+  if(cloud.lessons||local.lessons){m.lessons={};for(k in cloud.lessons)m.lessons[k]=cloud.lessons[k];for(k in local.lessons)m.lessons[k]=m.lessons[k]||local.lessons[k];}
+  if(cloud.mine||local.mine){var s=new Set((cloud.mine||[]).concat(local.mine||[]));m.mine=Array.from(s);}
+  if(cloud.weak||local.weak){var seen=new Set();m.weak=[];(local.weak||[]).concat(cloud.weak||[]).forEach(function(w){if(w.model&&!seen.has(w.model)){seen.add(w.model);m.weak.push(w);}});}
+  ['fcSeen','chunkReps','quizBest','scrBest','smaxBest','missionStreak'].forEach(function(k){if(cloud[k]!=null||local[k]!=null)m[k]=Math.max(cloud[k]||0,local[k]||0);});
+  if(cloud.scenes||local.scenes){m.scenes={};for(k in cloud.scenes)m.scenes[k]=cloud.scenes[k];for(k in local.scenes)m.scenes[k]=Math.max(m.scenes[k]||0,local.scenes[k]);}
+  if(cloud.bb||local.bb){m.bb={};for(k in cloud.bb)m.bb[k]=cloud.bb[k];for(k in local.bb)m.bb[k]=m.bb[k]||local.bb[k];}
+  if(cloud.missWords||local.missWords){m.missWords={};for(k in cloud.missWords)m.missWords[k]=cloud.missWords[k];for(k in local.missWords)m.missWords[k]=Math.max(m.missWords[k]||0,local.missWords[k]);}
+  if(cloud.readDone||local.readDone){m.readDone={};for(k in cloud.readDone)m.readDone[k]=true;for(k in local.readDone)m.readDone[k]=true;}
+  if(cloud.writeDrafts||local.writeDrafts){m.writeDrafts={};for(k in cloud.writeDrafts)m.writeDrafts[k]=cloud.writeDrafts[k];for(k in local.writeDrafts)m.writeDrafts[k]=local.writeDrafts[k];}
+  if(cloud.mineDates||local.mineDates){m.mineDates={};for(k in cloud.mineDates)m.mineDates[k]=cloud.mineDates[k];for(k in local.mineDates){if(!m.mineDates[k]||local.mineDates[k]>m.mineDates[k])m.mineDates[k]=local.mineDates[k];}}
+  return m;
+}
+async function cloudLoad(){
+  if(!SB||!SB_USER)return;
+  try{
+    var r=await SB.from('progress').select('prog,profile,updated_at').eq('id',SB_USER.id).single();
+    if(r.data&&r.data.prog){var merged=deepMerge(PROG,r.data.prog);for(var k in merged)PROG[k]=merged[k];localStorage.setItem('frprog',JSON.stringify(PROG));}
+    if(r.data&&r.data.profile){var cp=r.data.profile;for(var k2 in cp){if(cp[k2]!=null)P[k2]=cp[k2];}localStorage.setItem('frprofile',JSON.stringify(P));}
+    var r2=await SB.from('profiles').select('gemini_key,gemini_model,voice_name,rec_lang,theme,en_mode').eq('id',SB_USER.id).single();
+    if(r2.data){var p=r2.data;if(p.gemini_key)localStorage.setItem('frgemkey',p.gemini_key);if(p.gemini_model)localStorage.setItem('frgemmodel',p.gemini_model);if(p.voice_name)localStorage.setItem('frvoice',p.voice_name);if(p.rec_lang)localStorage.setItem('frrec',p.rec_lang);if(p.theme!=null)localStorage.setItem('frtheme',p.theme);if(p.en_mode!=null)localStorage.setItem('fren',p.en_mode?'1':'0');}
+    var r3=await SB.from('sessions').select('module,state').eq('user_id',SB_USER.id);
+    if(r3.data)r3.data.forEach(function(s){if(!localStorage.getItem('frsess_'+s.module))localStorage.setItem('frsess_'+s.module,JSON.stringify(s.state));});
+    rehydrate();
+  }catch(e){console.warn('cloudLoad error',e);}
+}
+function rehydrate(){
+  var ss=loadSession('scrmini');
+  if(ss&&ss.scrTiles&&ss.scrTiles.length){scrTiles=ss.scrTiles;scrPick=ss.scrPick||[];scrScore=ss.scrScore||0;scrFound=ss.scrFound||[];}
+  var sx=loadSession('smax');
+  if(sx&&sx.grid&&sx.grid.length){SMAX.grid=sx.grid;SMAX.rack=sx.rack||[];SMAX.placed=sx.placed||[];SMAX.score=sx.score||0;SMAX.turn=sx.turn||1;SMAX.vs=sx.vs||'solo';SMAX.aiRack=sx.aiRack||[];SMAX.aiScore=sx.aiScore||0;SMAX.lastAI=sx.lastAI||[];SMAX.aiWords=sx.aiWords||[];SMAX.sel=null;SMAX.msg='';SMAX.sosNote='';}
+  try{renderStart();}catch(e){}
+  try{if(typeof gamesRender==='function')gamesRender();}catch(e){}
+  try{if(typeof aiPaint==='function'&&aiKey())aiPaint();}catch(e){}
+}
+function cloudSync(){if(!SB||!SB_USER)return;clearTimeout(_syncTimer);_syncTimer=setTimeout(async function(){try{await SB.from('progress').upsert({id:SB_USER.id,prog:PROG,profile:P,updated_at:new Date().toISOString()},{onConflict:'id'});}catch(e){console.warn('cloudSync error',e);}},2000);}
+async function cloudSyncPrefs(){if(!SB||!SB_USER)return;try{await SB.from('profiles').upsert({id:SB_USER.id,voice_name:localStorage.getItem('frvoice')||null,rec_lang:localStorage.getItem('frrec')||'fr-FR',theme:localStorage.getItem('frtheme')||'dark',en_mode:localStorage.getItem('fren')==='1'},{onConflict:'id'});}catch(e){console.warn('cloudSyncPrefs error',e);}}
+async function cloudSyncSession(mod){if(!SB||!SB_USER)return;try{var raw=localStorage.getItem('frsess_'+mod);if(raw){await SB.from('sessions').upsert({user_id:SB_USER.id,module:mod,state:JSON.parse(raw),updated_at:new Date().toISOString()},{onConflict:'user_id,module'});}else{await SB.from('sessions').delete().eq('user_id',SB_USER.id).eq('module',mod);}}catch(e){console.warn('cloudSyncSession error',e);}}
+async function initAuth(){if(!SB)return;try{var r=await SB.auth.getSession();if(r.data.session&&r.data.session.user){SB_USER=r.data.session.user;SB_TOKEN=r.data.session.access_token||null;await cloudLoad();renderUserBar();return;}}catch(e){console.warn('initAuth error',e);}document.getElementById('authOverlay').style.display='flex';}
+window.addEventListener('beforeunload',function(){if(!SB||!SB_USER||!SB_TOKEN)return;clearTimeout(_syncTimer);var ts=new Date().toISOString();var hdrs={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SB_TOKEN,'Prefer':'resolution=merge-duplicates'};try{fetch(SUPA_URL+'/rest/v1/progress?on_conflict=id',{method:'POST',headers:hdrs,body:JSON.stringify({id:SB_USER.id,prog:PROG,profile:P,updated_at:ts}),keepalive:true}).catch(function(){});}catch(e){}['scrmini','quiz','bb','read','write','smax'].forEach(function(mod){var raw=localStorage.getItem('frsess_'+mod);if(raw){try{fetch(SUPA_URL+'/rest/v1/sessions?on_conflict=user_id,module',{method:'POST',headers:hdrs,body:JSON.stringify({user_id:SB_USER.id,module:mod,state:JSON.parse(raw),updated_at:ts}),keepalive:true}).catch(function(){});}catch(e){}}});});
+function toggleMenu(){document.querySelector('header').classList.toggle('menu-open');}
+function closeMenu(){document.querySelector('header').classList.remove('menu-open');}
 /* ==================== SPEECH ==================== */
 let voices=[], voicesBuilt=false;
 const isFrench=v=>/^fr|french|français|france/i.test((v.lang||'')+(v.name||''));
@@ -813,10 +969,13 @@ const P=JSON.parse(localStorage.getItem('frprofile')||'{}');
 const pdef={nom:'',pays:'mon pays',ville:'ma ville',langues:'anglais et un peu de français',
   metier:'Je suis étudiant(e)',age:'vingt-cinq'};
 function pget(k){return (P[k]!=null&&P[k]!=='')?P[k]:pdef[k];}
-function psave(){localStorage.setItem('frprofile',JSON.stringify(P));renderConv();}
+function psave(){localStorage.setItem('frprofile',JSON.stringify(P));renderConv();cloudSync();}
 const PROG=JSON.parse(localStorage.getItem('frprog')||'{}');
 if(!PROG.scenes)PROG.scenes={}; if(!PROG.weak)PROG.weak=[]; if(!PROG.lessons)PROG.lessons={};
-function progSave(){localStorage.setItem('frprog',JSON.stringify(PROG));}
+function progSave(){var ts=new Date().toISOString();localStorage.setItem('frprog',JSON.stringify(PROG));localStorage.setItem('frprog_ts',ts);cloudSync();}
+function saveSession(mod,state){localStorage.setItem('frsess_'+mod,JSON.stringify(state));cloudSyncSession(mod);}
+function loadSession(mod){var d=localStorage.getItem('frsess_'+mod);return d?JSON.parse(d):null;}
+function clearSession(mod){localStorage.removeItem('frsess_'+mod);cloudSyncSession(mod);}
 function saveScene(n,p){PROG.scenes[n]=Math.max(PROG.scenes[n]||0,p);progSave();renderStart();}
 function saveQuiz(p){PROG.quizBest=Math.max(PROG.quizBest||0,p);progSave();renderStart();}
 function bumpFC(){PROG.fcSeen=(PROG.fcSeen||0)+1;progSave();}
@@ -1971,7 +2130,7 @@ function applyTheme(t){
   const meta=document.querySelector('meta[name="theme-color"]');
   if(meta)meta.setAttribute('content',t==='light'?'#f5f6fb':'#090b14');
 }
-function toggleTheme(){applyTheme((localStorage.getItem('frtheme')||'dark')==='dark'?'light':'dark');}
+function toggleTheme(){applyTheme((localStorage.getItem('frtheme')||'dark')==='dark'?'light':'dark');cloudSyncPrefs();}
 applyTheme(localStorage.getItem('frtheme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));
 
 let EN = localStorage.getItem('frEN')==='1';
@@ -2216,6 +2375,7 @@ function toggleEN(){
   applyEN(document.body);
   const btn=document.getElementById('enToggle');
   if(btn){btn.classList.toggle('active',EN);btn.innerHTML=icon('globe')+(EN?' Français':' English');}
+  cloudSyncPrefs();
 }
 
 /* ==================== BUILDING BLOCKS (Constitution Phase 2) ====================
@@ -2487,15 +2647,16 @@ const SCRWORDS=(()=>{const s=new Set();
     .split(/\s+/).forEach(w=>{if(/^[a-z]{2,9}$/.test(w))s.add(w);});
   return s;})();
 const SCRVAL={a:1,e:1,i:1,n:1,o:1,r:1,s:1,t:1,u:1,l:1,d:2,g:2,m:2,b:3,c:3,p:3,f:4,h:4,v:4,j:8,q:8,k:10,w:10,x:10,y:10,z:10};
-let scrTiles=[],scrPick=[],scrScore=0,scrFound=[];
+var scrTiles=[],scrPick=[],scrScore=0,scrFound=[];
+function scrSaveSess(){saveSession('scrmini',{scrTiles:scrTiles,scrPick:scrPick,scrScore:scrScore,scrFound:scrFound});}
 function scrDeal(){
   const vow='aaeeeiioou'.split(''),con='bcdfglmnprstv'.split('');
   scrTiles=[];for(let i=0;i<4;i++)scrTiles.push(vow[Math.random()*vow.length|0]);
   for(let i=0;i<5;i++)scrTiles.push(con[Math.random()*con.length|0]);
-  scrTiles.sort(()=>Math.random()-.5);scrPick=[];gamesRender();
+  scrTiles.sort(()=>Math.random()-.5);scrPick=[];scrSaveSess();gamesRender();
 }
-function scrTap(i){if(scrPick.includes(i))return;scrPick.push(i);gamesRender();}
-function scrUndo(){scrPick.pop();gamesRender();}
+function scrTap(i){if(scrPick.includes(i))return;scrPick.push(i);scrSaveSess();gamesRender();}
+function scrUndo(){scrPick.pop();scrSaveSess();gamesRender();}
 function scrWord(){return scrPick.map(i=>scrTiles[i]).join('');}
 function scrSubmit(){
   const w=scrWord(),fb=document.getElementById('scrfb');if(!fb)return;
@@ -2505,7 +2666,7 @@ function scrSubmit(){
     const pts=w.split('').reduce((a,c)=>a+(SCRVAL[c]||1),0)+(w.length>=5?5:0);
     scrScore+=pts;scrFound.push(w);
     PROG.scrBest=Math.max(PROG.scrBest||0,scrScore);progSave();
-    scrPick=[];gamesRender();
+    scrPick=[];scrSaveSess();gamesRender();
     const f2=document.getElementById('scrfb');
     if(f2)f2.innerHTML=`<span class="ok" style="font-weight:800">${icon('check')} « ${esc(w)} » +${pts} pts</span> ${spk(w)}`;
     return;
@@ -2513,8 +2674,9 @@ function scrSubmit(){
   fb.innerHTML=`<span style="color:var(--bad)">${icon('x')} « ${esc(w)} » n’est pas dans le lexique A1.</span>`;
 }
 /* ---------- SCRABBLE MAX : real board, words must connect ---------- */
-const SMAX={n:11,grid:null,rack:[],placed:[],score:0,turn:1,sel:null,msg:'',
-            vs:'solo',aiRack:[],aiScore:0,lastAI:[],sosNote:''};
+var SMAX={n:11,grid:null,rack:[],placed:[],score:0,turn:1,sel:null,msg:'',
+            vs:'solo',aiRack:[],aiScore:0,lastAI:[],sosNote:'',aiWords:[]};
+function smaxSaveSess(){saveSession('smax',{grid:SMAX.grid,rack:SMAX.rack,placed:SMAX.placed,score:SMAX.score,turn:SMAX.turn,vs:SMAX.vs,aiRack:SMAX.aiRack,aiScore:SMAX.aiScore,lastAI:SMAX.lastAI,aiWords:SMAX.aiWords||[]});}
 function smaxCell(r,c){return SMAX.grid[r*SMAX.n+c];}
 /* ---- word engine: signatures so we can guarantee playable racks & find moves ---- */
 function wsig(w){const s={};for(const c of w)s[c]=(s[c]||0)+1;return s;}
@@ -2570,14 +2732,14 @@ function smaxInit(){
   SMAX.grid=new Array(SMAX.n*SMAX.n).fill(null);
   SMAX.rack=[];SMAX.placed=[];SMAX.score=0;SMAX.turn=1;SMAX.sel=null;SMAX.msg='';
   SMAX.aiScore=0;SMAX.aiRack=smaxFill([]);SMAX.lastAI=[];SMAX.sosNote='';SMAX.aiWords=[];
-  smaxDraw();gamesRender();
+  smaxDraw();smaxSaveSess();gamesRender();
 }
 function smaxMode(v){SMAX.vs=v;smaxInit();}
 function smaxDraw(){SMAX.rack=smaxFill(SMAX.rack);}
 /* computer opponent plays one turn */
 function smaxAI(){
   const move=smaxFindMove(SMAX.aiRack);
-  if(!move){SMAX.aiRack=smaxFill(SMAX.aiRack.slice(0,3));SMAX.msg='🤖 L’ordinateur passe son tour.';gamesRender();return;}
+  if(!move){SMAX.aiRack=smaxFill(SMAX.aiRack.slice(0,3));SMAX.msg=`🤖 L’ordinateur passe son tour.`;gamesRender();return;}
   move.cells.forEach(c=>{SMAX.grid[c.r*SMAX.n+c.c]=c.letter;const i=SMAX.aiRack.indexOf(c.letter);if(i>=0)SMAX.aiRack.splice(i,1);});
   SMAX.aiScore+=move.score;SMAX.aiRack=smaxFill(SMAX.aiRack);
   SMAX.lastAI=move.cells.map(c=>c.r*SMAX.n+c.c);
@@ -2585,20 +2747,20 @@ function smaxAI(){
   // record the full word (anchor + new cells) so its tiles are hoverable/clickable
   const full=smaxWords().find(x=>x.w===move.word&&x.cells.some(c=>SMAX.lastAI.includes(c)));
   SMAX.aiWords.push({cells:full?full.cells:SMAX.lastAI,word:move.word,gloss:g,score:move.score,by:'ai'});
-  SMAX.msg='🤖 L’ordinateur a joué « '+move.word+' »'+(g?' ('+g+')':'')+' → +'+move.score+' pts. Survole ou clique ses lettres roses pour le détail.';
-  gamesRender();
+  SMAX.msg=`🤖 L’ordinateur a joué « ${move.word} »${g?' ('+g+')':''} → +${move.score} pts. Survole ou clique ses lettres roses pour le détail.`;
+  smaxSaveSess();gamesRender();
 }
-/* SOS — you're blank: it plays YOUR turn for you and explains the word */
+/* SOS — you’re blank: it plays YOUR turn for you and explains the word */
 function smaxSOS(){
   smaxRecall();
   const move=smaxFindMove(SMAX.rack);
-  if(!move){SMAX.rack=smaxFill([]);SMAX.msg='SOS : je t’ai redonné des lettres jouables — à toi !';gamesRender();return;}
+  if(!move){SMAX.rack=smaxFill([]);SMAX.msg=`SOS : je t’ai redonné des lettres jouables — à toi !`;smaxSaveSess();gamesRender();return;}
   move.cells.forEach(c=>{const k=c.r*SMAX.n+c.c;SMAX.grid[k]=c.letter;SMAX.placed.push({k,letter:c.letter});
     const i=SMAX.rack.indexOf(c.letter);if(i>=0)SMAX.rack.splice(i,1);});
   const g=scrGloss(move.word);
-  SMAX.sosNote='SOS propose « '+move.word+' » ('+move.score+' pts)'+(g?' — « '+move.word+' » veut dire “'+g+'”':'')
-    +'. Écoute-le, puis clique « Valider le tour » pour le jouer.';
-  SMAX.msg='';SMAX.sosWord=move.word;gamesRender();
+  SMAX.sosNote=`SOS propose « ${move.word} » (${move.score} pts)${g?` — « ${move.word} » veut dire “${g}”`:''}`
+    +`. Écoute-le, puis clique « Valider le tour » pour le jouer.`;
+  SMAX.msg='';SMAX.sosWord=move.word;smaxSaveSess();gamesRender();
 }
 /* click/hover a computer-formed word → popover with its meaning & details */
 function smaxWordInfo(k){
@@ -2619,16 +2781,16 @@ function smaxWordInfo(k){
   pop.style.top=(r.bottom+window.scrollY+8)+'px';
   pop.style.left=Math.max(10,Math.min(r.left+window.scrollX+r.width/2-w/2,innerWidth-w-10))+'px';
 }
-function smaxSel(i){SMAX.sel=(SMAX.sel===i?null:i);SMAX.msg='';gamesRender();}
+function smaxSel(i){SMAX.sel=(SMAX.sel===i?null:i);SMAX.msg='';smaxSaveSess();gamesRender();}
 function smaxPlace(r,c){
   if(SMAX.sel==null){SMAX.msg='Choisis d’abord une lettre du chevalet.';gamesRender();return;}
   const k=r*SMAX.n+c;
   if(SMAX.grid[k]){SMAX.msg='Case déjà occupée.';gamesRender();return;}
   SMAX.grid[k]=SMAX.rack[SMAX.sel];
   SMAX.placed.push({k,letter:SMAX.rack[SMAX.sel]});
-  SMAX.rack.splice(SMAX.sel,1);SMAX.sel=null;SMAX.msg='';gamesRender();
+  SMAX.rack.splice(SMAX.sel,1);SMAX.sel=null;SMAX.msg='';smaxSaveSess();gamesRender();
 }
-function smaxRecall(){SMAX.placed.forEach(p=>{SMAX.grid[p.k]=null;SMAX.rack.push(p.letter);});SMAX.placed=[];SMAX.msg='';gamesRender();}
+function smaxRecall(){SMAX.placed.forEach(p=>{SMAX.grid[p.k]=null;SMAX.rack.push(p.letter);});SMAX.placed=[];SMAX.msg='';smaxSaveSess();gamesRender();}
 /* read every maximal horizontal & vertical run on the board */
 function smaxWords(){
   const n=SMAX.n,out=[];
@@ -2661,11 +2823,11 @@ function smaxSubmit(){
   SMAX.score+=pts;SMAX.turn++;SMAX.placed=[];SMAX.sosNote='';smaxDraw();
   PROG.smaxBest=Math.max(PROG.smaxBest||0,SMAX.score);progSave();
   SMAX.msg='✓ '+touched.map(w=>w.w).join(' + ')+' → +'+pts+' points. Survole ou clique tes lettres pour le détail.';
-  gamesRender();
+  smaxSaveSess();gamesRender();
   if(SMAX.vs==='ordi')setTimeout(smaxAI,650);   // computer replies
 }
 function smaxCard(){
-  if(!SMAX.grid)smaxInit();
+  if(!SMAX.grid){var ss=loadSession('smax');if(ss&&ss.grid&&ss.grid.length){SMAX.grid=ss.grid;SMAX.rack=ss.rack||[];SMAX.placed=ss.placed||[];SMAX.score=ss.score||0;SMAX.turn=ss.turn||1;SMAX.vs=ss.vs||'solo';SMAX.aiRack=ss.aiRack||[];SMAX.aiScore=ss.aiScore||0;SMAX.lastAI=ss.lastAI||[];SMAX.aiWords=ss.aiWords||[];SMAX.sel=null;SMAX.msg='';SMAX.sosNote='';}else{smaxInit();}}
   const n=SMAX.n,mid=Math.floor(n/2);
   const wordAt=w=>SMAX.aiWords.slice().reverse().find(x=>x.cells.includes(w));
   const board=Array.from({length:n},(_,r)=>Array.from({length:n},(_,c)=>{
@@ -2787,7 +2949,9 @@ async function aiDiscover(){
 }
 function aiSaveKey(){const v=document.getElementById('aiKey').value.trim();
   if(v)localStorage.setItem('frgemkey',v);else{localStorage.removeItem('frgemkey');localStorage.removeItem('frgemmodel');}
-  aiModels=[];aiPaint();if(v)aiDiscover();}
+  aiModels=[];aiPaint();if(v)aiDiscover();
+  if(SB&&SB_USER){SB.from('profiles').upsert({id:SB_USER.id,gemini_key:v||null,gemini_model:localStorage.getItem('frgemmodel')||null},{onConflict:'id'}).then(function(){}).catch(function(e){console.warn('aiSaveKey sync',e);});}
+}
 /* ---- rough "sounds like" phonetic fallback for whenever the AI forgets to supply one ---- */
 function frPhon(raw){
   return String(raw).split(/\s+/).map(word=>{
@@ -3200,7 +3364,23 @@ function renderSub(b,active){
   sub.innerHTML='';
   b.t.forEach(t=>{const btn=document.createElement('button');btn.innerHTML=icon(TABIC[t]||'dots')+'<span>'+t+'</span>';btn.className=(t===active?'active':'');btn.onclick=()=>show(t);sub.appendChild(btn);});
 }
+function goFS(el){
+  var target=el.closest('.tab');if(!target)return;
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+    (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+  }else{
+    (target.requestFullscreen||target.webkitRequestFullscreen).call(target).catch(function(){});
+  }
+}
+function injectFS(tab){
+  if(tab.querySelector('.fs-btn'))return;
+  var btn=document.createElement('button');btn.className='fs-btn';btn.title='Plein écran';
+  btn.setAttribute('aria-label','Toggle fullscreen');
+  btn.innerHTML=icon('maximize');btn.onclick=function(){goFS(this);};
+  tab.prepend(btn);
+}
 function show(name){
+  closeMenu();
   if(name!=='Chunks'){try{stopLoop();if(SES.on)sesStop();}catch(e){}}  // no orphaned audio
   const b=BUCKETS.find(x=>x.t.includes(name))||BUCKETS[0];
   [...nav.children].forEach(x=>x.classList.toggle('active',x.dataset.bucket===b.id));
@@ -3209,6 +3389,7 @@ function show(name){
   const t=document.querySelector(`[data-tab="${name}"]`);const first=!t.dataset.loaded;
   const reload=['Départ','Mon Profil','Leçons','Points faibles','Chunks','Alphabet','Accents','Sons','Jeux','Lecture','Écriture'];
   if(first||reload.includes(name)){t.innerHTML=TABS[name]();t.dataset.loaded=1;}
+  injectFS(t);
   if(name==='Vocabulaire'&&first)initFC();
   if(name==='Grammaire'&&first)qStart();
   if(name==='Prononciation'&&first)echoInit();
@@ -3219,10 +3400,12 @@ function show(name){
 /* mount the always-on-standby AI layer */
 document.body.insertAdjacentHTML('beforeend',aiPanelHTML());
 aiPaint(); aiSelInit(); if(aiKey())aiDiscover();
+{const ss=loadSession('scrmini');if(ss){scrTiles=ss.tiles||[];scrPick=ss.pick||[];scrScore=ss.score||0;scrFound=ss.found||[];}};
 if(!scrTiles.length)scrDeal();
 bbLoad(0);            // deal the first Building-Blocks exercise
 show('Départ');
 if(EN){const btn=document.getElementById('enToggle');if(btn){btn.classList.add('active');btn.innerHTML=icon('globe')+' Français';}applyEN(document.body);}
+initAuth();
 </script>
 </body>
 </html>
