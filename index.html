@@ -529,7 +529,15 @@
     padding:7px;border-radius:8px;line-height:0}
   .hamburger .ic{width:20px;height:20px}
   @media(max-width:768px){
+    html,body{overflow-x:hidden}
     .hamburger{display:flex;align-items:center;justify-content:center}
+    #themeLabel{display:none}
+    #enToggle{padding:6px 8px;font-size:0}
+    #enToggle .ic{font-size:initial;width:15px;height:15px}
+    #themeToggle{padding:6px 8px}
+    .user-bar span{display:none}
+    .user-bar button{font-size:10px;padding:4px 8px}
+    .appbar .rightbtns{gap:5px}
     .chromebar{display:none;position:absolute;top:100%;left:0;right:0;
       background:var(--bg2);border-bottom:1px solid var(--line);z-index:25;
       box-shadow:0 12px 32px rgba(0,0,0,.4)}
@@ -3408,7 +3416,7 @@ function show(name){
 /* mount the always-on-standby AI layer */
 document.body.insertAdjacentHTML('beforeend',aiPanelHTML());
 aiPaint(); aiSelInit(); if(aiKey())aiDiscover();
-{const ss=loadSession('scrmini');if(ss){scrTiles=ss.tiles||[];scrPick=ss.pick||[];scrScore=ss.score||0;scrFound=ss.found||[];}};
+{const ss=loadSession('scrmini');if(ss&&ss.scrTiles){scrTiles=ss.scrTiles;scrPick=ss.scrPick||[];scrScore=ss.scrScore||0;scrFound=ss.scrFound||[];}};
 if(!scrTiles.length)scrDeal();
 if(!bbRestore())bbLoad(0);            // deal the first Building-Blocks exercise
 show('Départ');
