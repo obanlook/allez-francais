@@ -401,7 +401,7 @@
   }
 
   /* ============ v5: BUILDING BLOCKS · SCRABBLE · MISSION · ASK AI ============ */
-  .bbchip{display:inline-flex;align-items:center;gap:7px;background:color-mix(in srgb,var(--bc) 24%,var(--card2));
+  .bbchip{display:inline-flex;align-items:center;gap:7px;background:color-mix(in srgb,var(--bc) 30%,var(--card2));
     border:1px solid color-mix(in srgb,var(--bc) 55%,transparent);color:var(--ink);border-radius:10px;
     padding:9px 13px;font-size:var(--f-md);font-weight:700;cursor:pointer;transition:transform .12s var(--ease),box-shadow .12s}
   .bbchip:hover{transform:translateY(-2px);box-shadow:0 6px 16px color-mix(in srgb,var(--bc) 30%,transparent)}
@@ -763,8 +763,13 @@ function rehydrate(){
   if(sq&&sq.qorder&&sq.qorder.length&&sq.qi<sq.qorder.length){qi=sq.qi;qscore=sq.qscore;qorder=sq.qorder;}
   var sb=loadSession('bb');
   if(sb&&sb.bbTray){bbI=sb.bbI||0;bbTray=sb.bbTray;bbBank=sb.bbBank||[];bbDone=sb.bbDone||false;}
+  var sr=loadSession('read');
+  if(sr&&sr.readI!=null){readI=sr.readI;readAns=sr.readAns||{};readShown=!!sr.readShown;}
+  var sw=loadSession('write');
+  if(sw&&sw.writeI!=null){writeI=sw.writeI;}
   try{renderStart();}catch(e){}
   try{if(typeof gamesRender==='function')gamesRender();}catch(e){}
+  try{if(typeof gamesRenderLE==='function')gamesRenderLE();}catch(e){}
   try{if(typeof aiPaint==='function'&&aiKey())aiPaint();}catch(e){}
 }
 function cloudSync(){if(!SB||!SB_USER)return;clearTimeout(_syncTimer);_syncTimer=setTimeout(async function(){try{await SB.from('progress').upsert({id:SB_USER.id,prog:PROG,profile:P,updated_at:new Date().toISOString()},{onConflict:'id'});}catch(e){console.warn('cloudSync error',e);}},2000);}
@@ -2396,17 +2401,17 @@ function toggleEN(){
    Construct French from coloured grammatical blocks instead of recalling whole
    sentences. Colour = part of speech, so structure becomes visible. */
 const BBT={
- pron :{l:'pronom',       c:'#7aa2ff'},
- aux  :{l:'être/avoir/aller',c:'#ff8fa3'},
- verb :{l:'verbe',        c:'#b48bff'},
- noun :{l:'nom',          c:'#38d6c8'},
- art  :{l:'article',      c:'#ffc24b'},
- adj  :{l:'adjectif',     c:'#ff9f68'},
- prep :{l:'préposition',  c:'#6ee7ff'},
- adv  :{l:'adverbe',      c:'#9be36d'},
- neg  :{l:'négation',     c:'#ff6b7d'},
- q    :{l:'question',     c:'#ffd166'},
- phr  :{l:'expression',   c:'#aab2dc'}
+ pron :{l:'pronom',       c:'#5B8FFF'},
+ aux  :{l:'être/avoir/aller',c:'#FF6B85'},
+ verb :{l:'verbe',        c:'#A06BFF'},
+ noun :{l:'nom',          c:'#20D4B5'},
+ art  :{l:'article',      c:'#FFB020'},
+ adj  :{l:'adjectif',     c:'#FF7E3A'},
+ prep :{l:'préposition',  c:'#40D8FF'},
+ adv  :{l:'adverbe',      c:'#7ED63A'},
+ neg  :{l:'négation',     c:'#FF4060'},
+ q    :{l:'question',     c:'#FFC233'},
+ phr  :{l:'expression',   c:'#8B95CC'}
 };
 const BBEX=[
  // ── niveau 1 : les briques de base ─────────────────────────────
@@ -2545,13 +2550,23 @@ function bbRestore(){var ss=loadSession('bb');if(ss&&ss.bbTray){bbI=ss.bbI||0;bb
 function bbChip(b,where,idx){
   const c=BBT[b.ty]||BBT.phr;
   return `<button class="bbchip" draggable="${where==='tray'}" data-i="${idx}"
-    ${where==='tray'?`ondragstart="bbDragI=${idx}" ondragover="event.preventDefault()" ondrop="bbDrop(event,${idx})"`:''}
+    ${where==='tray'?`ondragstart="bbDragI=${idx}" ondragover="event.preventDefault()" ondrop="bbDrop(event,${idx})" ontouchstart="bbTouchStart(event,${idx})"`:''}
     onclick="${where==='bank'?`bbAdd(${idx})`:`bbRemove(${idx})`}"
     style="--bc:${c.c}" title="${esc(c.l)}"><span class="bbdot"></span>${esc(b.t)}</button>`;
 }
 function bbAdd(i){const b=bbBank.splice(i,1)[0];if(b){bbTray.push(b);bbSaveSess();bbRender();}}
 function bbRemove(i){const b=bbTray.splice(i,1)[0];if(b&&!b.custom)bbBank.push(b);bbSaveSess();bbRender();}
 function bbDrop(e,i){e.preventDefault();if(bbDragI==null||bbDragI===i)return;const b=bbTray.splice(bbDragI,1)[0];bbTray.splice(i,0,b);bbDragI=null;bbSaveSess();bbRender();}
+var _bbGhost=null,_bbTouchI=null;
+function bbTouchStart(e,idx){e.preventDefault();_bbTouchI=idx;const t=e.touches[0],el=e.currentTarget;
+  _bbGhost=el.cloneNode(true);_bbGhost.style.cssText='position:fixed;z-index:9999;pointer-events:none;opacity:.85;transform:scale(1.08);'+el.style.cssText;
+  _bbGhost.style.left=(t.clientX-40)+'px';_bbGhost.style.top=(t.clientY-20)+'px';document.body.appendChild(_bbGhost);}
+document.addEventListener('touchmove',function(e){if(_bbGhost){var t=e.touches[0];_bbGhost.style.left=(t.clientX-40)+'px';_bbGhost.style.top=(t.clientY-20)+'px';}},{passive:true});
+document.addEventListener('touchend',function(e){if(_bbGhost){_bbGhost.remove();_bbGhost=null;}
+  if(_bbTouchI==null)return;var ch=e.changedTouches[0];var el=document.elementFromPoint(ch.clientX,ch.clientY);
+  var tgt=el?el.closest('.bbchip[data-i]'):null;
+  if(tgt){var j=parseInt(tgt.dataset.i,10);if(!isNaN(j)&&j!==_bbTouchI){var b=bbTray.splice(_bbTouchI,1)[0];bbTray.splice(j,0,b);bbSaveSess();bbRender();}}
+  _bbTouchI=null;});
 function bbCustom(){
   const inp=document.getElementById('bbcustom');if(!inp)return;const v=inp.value.trim();if(!v)return;
   const ty=(document.getElementById('bbtype')||{}).value||'phr';
@@ -2883,9 +2898,17 @@ function smaxCard(){
    ${SMAX.msg?`<div class="callout${/^✓|joué/.test(SMAX.msg)?'':' warn'}" style="margin-top:10px">${icon(/^✓|joué/.test(SMAX.msg)?'check':'zap')}<div>${esc(SMAX.msg)}</div></div>`:''}
   </div>`;
 }
+var scrMiniOpen=false;
+function scrToggleMini(){scrMiniOpen=!scrMiniOpen;gamesRender();}
 function bbScrabbleCard(){
-  return `<div class="card"><h3>${icon('grid')} Mini-Scrabble français</h3>
-   <p class="muted" style="font-size:13px">Fais des mots français avec tes lettres — un échauffement pour l’orthographe. Score : <b class="ok">${scrScore}</b> · record <b class="warn">${PROG.scrBest||0}</b></p>
+  const hdr=`<div class="card" style="cursor:pointer" onclick="scrToggleMini()"><div style="display:flex;justify-content:space-between;align-items:center">
+    <h3 style="margin:0">${icon('grid')} Mini-Scrabble <span class="muted" style="font-size:13px;font-weight:600">· score ${scrScore} · record ${PROG.scrBest||0}</span></h3>
+    <span style="font-size:18px;color:var(--muted)">${scrMiniOpen?'▲':'▼'}</span></div></div>`;
+  if(!scrMiniOpen)return hdr;
+  return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="scrToggleMini()">
+    <h3 style="margin:0">${icon('grid')} Mini-Scrabble français</h3>
+    <span style="font-size:18px;color:var(--muted)">▲</span></div>
+   <p class="muted" style="font-size:13px">Fais des mots français avec tes lettres — un échauffement pour l'orthographe. Score : <b class="ok">${scrScore}</b> · record <b class="warn">${PROG.scrBest||0}</b></p>
    <div class="scrrack">${scrTiles.length?scrTiles.map((t,i)=>`<button class="scrtile${scrPick.includes(i)?' used':''}" onclick="scrTap(${i})" ${scrPick.includes(i)?'disabled':''}>${esc(t)}<sub>${SCRVAL[t]||1}</sub></button>`).join(''):'<span class="muted" style="font-size:13px">Clique « Nouvelles lettres » pour commencer.</span>'}</div>
    <div class="scrword">${scrPick.length?esc(scrWord()):'<span class="muted" style="font-size:14px">…</span>'}</div>
    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
@@ -3258,10 +3281,12 @@ const READING=[
    ]},
 ];
 let readI=0,readAns={},readShown=false;
-function readLoad(i){readI=(i+READING.length)%READING.length;readAns={};readShown=false;gamesRenderLE();}
+function readSaveSess(){saveSession('read',{readI:readI,readAns:readAns,readShown:readShown});}
+function readRestore(){var ss=loadSession('read');if(ss&&ss.readI!=null){readI=ss.readI;readAns=ss.readAns||{};readShown=!!ss.readShown;return true;}return false;}
+function readLoad(i){readI=(i+READING.length)%READING.length;readAns={};readShown=false;readSaveSess();gamesRenderLE();}
 function readPassage(){return READING[readI];}
-function readAnswer(qi,oi){if(readShown)return;readAns[qi]=oi;gamesRenderLE();}
-function readCheck(){readShown=true;
+function readAnswer(qi,oi){if(readShown)return;readAns[qi]=oi;readSaveSess();gamesRenderLE();}
+function readCheck(){readShown=true;readSaveSess();
   const p=readPassage();let score=0;p.q.forEach((qq,i)=>{if(readAns[i]===qq.a)score++;});
   PROG.readBest=PROG.readBest||{};PROG.readBest[readI]=Math.max(PROG.readBest[readI]||0,score);
   PROG.readDone=PROG.readDone||{};PROG.readDone[readI]=true;progSave();gamesRenderLE();
@@ -3313,7 +3338,9 @@ const WRITING=[
   hint:'Il fait… Il y a… Je vais…',min:15},
 ];
 let writeI=0;
-function writeLoad(i){writeI=(i+WRITING.length)%WRITING.length;gamesRenderLE();
+function writeSaveSess(){saveSession('write',{writeI:writeI});}
+function writeRestore(){var ss=loadSession('write');if(ss&&ss.writeI!=null){writeI=ss.writeI;return true;}return false;}
+function writeLoad(i){writeI=(i+WRITING.length)%WRITING.length;writeSaveSess();gamesRenderLE();
   const ta=document.getElementById('writeTA');if(ta)ta.value=PROG.writeDrafts?.[writeI]||'';}
 function writeSave(){const ta=document.getElementById('writeTA');if(!ta)return;
   PROG.writeDrafts=PROG.writeDrafts||{};PROG.writeDrafts[writeI]=ta.value;progSave();}
@@ -3418,7 +3445,9 @@ document.body.insertAdjacentHTML('beforeend',aiPanelHTML());
 aiPaint(); aiSelInit(); if(aiKey())aiDiscover();
 {const ss=loadSession('scrmini');if(ss&&ss.scrTiles){scrTiles=ss.scrTiles;scrPick=ss.scrPick||[];scrScore=ss.scrScore||0;scrFound=ss.scrFound||[];}};
 if(!scrTiles.length)scrDeal();
-if(!bbRestore())bbLoad(0);            // deal the first Building-Blocks exercise
+if(!bbRestore())bbLoad(0);
+readRestore();
+writeRestore();
 show('Départ');
 if(EN){const btn=document.getElementById('enToggle');if(btn){btn.classList.add('active');btn.innerHTML=icon('globe')+' Français';}applyEN(document.body);}
 initAuth();
