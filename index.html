@@ -585,6 +585,15 @@
   .ar-text{font-size:var(--f-md);line-height:2.05;margin-top:10px}
   .ar-p{margin:0 0 15px}
   .ar-p:last-child{margin-bottom:0}
+  /* ---- ecoute (DELF listening) ---- */
+  .ec-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0}
+  .ec-play{min-width:158px}
+  .ec-count{font-size:12px;color:var(--muted);font-weight:700}
+  .ec-count.spent{color:var(--accent)}
+  .ec-tr{margin-top:10px;padding:12px 14px;border-radius:var(--r);background:var(--card2);
+    border:1px solid var(--line);font-size:var(--f-md);line-height:1.75}
+  .ec-tr.locked{background:transparent;border:1.5px dashed var(--line2);color:var(--faint);
+    display:flex;align-items:center;gap:9px;font-size:var(--f-sm)}
   .arw{cursor:pointer;border-radius:5px;padding:1px 2px;margin:0 -1px;
     transition:background-color .12s var(--ease),color .12s var(--ease)}
   .arw:hover{background:color-mix(in srgb,var(--fr) 18%,transparent)}
@@ -793,6 +802,8 @@ function rehydrate(){
   if(sr&&sr.readI!=null){readI=sr.readI;readAns=sr.readAns||{};readShown=!!sr.readShown;}
   var sw=loadSession('write');
   if(sw&&sw.writeI!=null){writeI=sw.writeI;}
+  var se=loadSession('ecoute');
+  if(se&&se.ecI!=null){ecI=se.ecI;ecAns=se.ecAns||{};ecShown=!!se.ecShown;ecPlays=se.ecPlays||0;}
   try{renderStart();}catch(e){}
   try{if(typeof gamesRender==='function')gamesRender();}catch(e){}
   try{if(typeof gamesRenderLE==='function')gamesRenderLE();}catch(e){}
@@ -802,7 +813,7 @@ function cloudSync(){if(!SB||!SB_USER)return;clearTimeout(_syncTimer);_syncTimer
 async function cloudSyncPrefs(){if(!SB||!SB_USER)return;try{await SB.from('profiles').upsert({id:SB_USER.id,voice_name:localStorage.getItem('frvoice')||null,rec_lang:localStorage.getItem('frrec')||'fr-FR',theme:localStorage.getItem('frtheme')||'dark',en_mode:localStorage.getItem('fren')==='1'},{onConflict:'id'});}catch(e){console.warn('cloudSyncPrefs error',e);}}
 async function cloudSyncSession(mod){if(!SB||!SB_USER)return;try{var raw=localStorage.getItem('frsess_'+mod);if(raw){await SB.from('sessions').upsert({user_id:SB_USER.id,module:mod,state:JSON.parse(raw),updated_at:new Date().toISOString()},{onConflict:'user_id,module'});}else{await SB.from('sessions').delete().eq('user_id',SB_USER.id).eq('module',mod);}}catch(e){console.warn('cloudSyncSession error',e);}}
 async function initAuth(){if(!SB)return;try{var r=await SB.auth.getSession();if(r.data.session&&r.data.session.user){SB_USER=r.data.session.user;SB_TOKEN=r.data.session.access_token||null;await cloudLoad();renderUserBar();return;}}catch(e){console.warn('initAuth error',e);}document.getElementById('authOverlay').style.display='flex';}
-window.addEventListener('beforeunload',function(){if(!SB||!SB_USER||!SB_TOKEN)return;clearTimeout(_syncTimer);var ts=new Date().toISOString();var hdrs={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SB_TOKEN,'Prefer':'resolution=merge-duplicates'};try{fetch(SUPA_URL+'/rest/v1/progress?on_conflict=id',{method:'POST',headers:hdrs,body:JSON.stringify({id:SB_USER.id,prog:PROG,profile:P,updated_at:ts}),keepalive:true}).catch(function(){});}catch(e){}['scrmini','quiz','bb','read','write','smax'].forEach(function(mod){var raw=localStorage.getItem('frsess_'+mod);if(raw){try{fetch(SUPA_URL+'/rest/v1/sessions?on_conflict=user_id,module',{method:'POST',headers:hdrs,body:JSON.stringify({user_id:SB_USER.id,module:mod,state:JSON.parse(raw),updated_at:ts}),keepalive:true}).catch(function(){});}catch(e){}}});});
+window.addEventListener('beforeunload',function(){if(!SB||!SB_USER||!SB_TOKEN)return;clearTimeout(_syncTimer);var ts=new Date().toISOString();var hdrs={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SB_TOKEN,'Prefer':'resolution=merge-duplicates'};try{fetch(SUPA_URL+'/rest/v1/progress?on_conflict=id',{method:'POST',headers:hdrs,body:JSON.stringify({id:SB_USER.id,prog:PROG,profile:P,updated_at:ts}),keepalive:true}).catch(function(){});}catch(e){}['scrmini','quiz','bb','read','write','smax','ecoute'].forEach(function(mod){var raw=localStorage.getItem('frsess_'+mod);if(raw){try{fetch(SUPA_URL+'/rest/v1/sessions?on_conflict=user_id,module',{method:'POST',headers:hdrs,body:JSON.stringify({user_id:SB_USER.id,module:mod,state:JSON.parse(raw),updated_at:ts}),keepalive:true}).catch(function(){});}catch(e){}}});});
 function toggleMenu(){document.querySelector('header').classList.toggle('menu-open');}
 function closeMenu(){document.querySelector('header').classList.remove('menu-open');}
 /* ==================== SPEECH ==================== */
@@ -3255,6 +3266,179 @@ function missionCard(){
 }
 
 /* ==================== LECTURE & ÉCRITURE (reading & writing comprehension) ==================== */
+/* ==================== ECOUTE - DELF A1 compréhension de l'oral ====================
+   Exam-faithful on purpose: audio only, transcript hidden, TWO listens maximum.
+   The real paper gives you no text and no third play. The transcript unlocks the
+   moment you commit to answers, and replay goes unlimited after that for study. */
+const ECOUTE=[
+ {lv:1,type:'annonce',title:'À la gare',
+  ctx:"Tu es à la gare. Tu entends cette annonce.",
+  audio:"Mesdames et messieurs, le train à destination de Paris partira à quatorze heures trente, voie numéro sept. Attention à la fermeture des portes.",
+  q:[
+   {q:'Le train va où ?',o:['à Paris','à Lyon','à Bruxelles'],a:0},
+   {q:'À quelle heure part le train ?',o:['quatorze heures treize','quatorze heures trente','quatre heures trente'],a:1},
+   {q:'Quelle est la voie ?',o:['voie 7','voie 17','voie 6'],a:0},
+  ]},
+ {lv:1,type:'message',title:'Un message sur le téléphone',
+  ctx:"Tu écoutes un message sur ton téléphone.",
+  audio:"Bonjour, c'est Julie. Je suis désolée, je ne peux pas venir ce soir, je suis malade. Est-ce qu'on peut se voir samedi ? Rappelle-moi. Au revoir !",
+  q:[
+   {q:'Qui téléphone ?',o:['Julie','Marie','Sophie'],a:0},
+   {q:'Pourquoi ne vient-elle pas ?',o:['elle travaille','elle est malade','elle est en retard'],a:1},
+   {q:'Quand propose-t-elle de se voir ?',o:['vendredi','samedi','dimanche'],a:1},
+  ]},
+ {lv:1,type:'dialogue',title:'Au café',
+  ctx:"Tu es dans un café. Tu entends cette conversation.",
+  audio:"Bonjour, vous désirez ? — Un café et un croissant, s'il vous plaît. — Ça fait quatre euros cinquante. — Voilà. — Merci, bonne journée !",
+  q:[
+   {q:'Que commande le client ?',o:['un thé et un gâteau','un café et un croissant','un jus d\'orange'],a:1},
+   {q:'Combien ça coûte ?',o:['quatre euros quinze','quatre euros cinquante','cinq euros quarante'],a:1},
+  ]},
+ {lv:1,type:'météo',title:'La météo à la radio',
+  ctx:"Tu écoutes la météo à la radio.",
+  audio:"Aujourd'hui à Bruxelles, il fait froid : cinq degrés. Il pleut ce matin. Cet après-midi, il y aura du soleil. Demain, il fera plus chaud : douze degrés.",
+  q:[
+   {q:'Quel temps fait-il ce matin ?',o:['il pleut','il neige','il y a du soleil'],a:0},
+   {q:"Quelle température fait-il aujourd'hui ?",o:['cinq degrés','douze degrés','quinze degrés'],a:0},
+   {q:'Quel temps fera-t-il demain ?',o:['plus froid','plus chaud','il pleuvra'],a:1},
+  ]},
+ {lv:2,type:'dialogue',title:'Demander son chemin',
+  ctx:"Tu demandes ton chemin dans la rue.",
+  audio:"Excusez-moi, où est la poste ? — Vous allez tout droit, puis vous tournez à gauche après la pharmacie. C'est à côté de la banque. — C'est loin ? — Non, cinq minutes à pied.",
+  q:[
+   {q:'Que cherche la personne ?',o:['la poste','la banque','la pharmacie'],a:0},
+   {q:'Où faut-il tourner ?',o:['à droite','à gauche','nulle part'],a:1},
+   {q:"C'est à combien de temps à pied ?",o:['cinq minutes','quinze minutes','cinquante minutes'],a:0},
+  ]},
+ {lv:2,type:'téléphone',title:'Prendre rendez-vous',
+  ctx:"Tu téléphones au cabinet du médecin.",
+  audio:"Cabinet du docteur Leroy, bonjour. — Bonjour, je voudrais un rendez-vous. — Oui, mardi à onze heures, ça vous va ? — Mardi, c'est difficile. Mercredi ? — Alors mercredi, à seize heures. — Parfait, merci beaucoup.",
+  q:[
+   {q:'Quel jour est le rendez-vous ?',o:['mardi','mercredi','jeudi'],a:1},
+   {q:'À quelle heure ?',o:['onze heures','seize heures','six heures'],a:1},
+  ]},
+ {lv:2,type:'annonce',title:'Au supermarché',
+  ctx:"Tu es au supermarché. Tu entends cette annonce.",
+  audio:"Chers clients, aujourd'hui, promotion sur les fruits : deux kilos de pommes pour trois euros. Le magasin ferme à vingt heures. Merci de votre visite.",
+  q:[
+   {q:'Sur quoi porte la promotion ?',o:['les légumes','les pommes','le fromage'],a:1},
+   {q:'Combien coûtent deux kilos ?',o:['deux euros','trois euros','vingt euros'],a:1},
+   {q:'Le magasin ferme à quelle heure ?',o:['dix-huit heures','vingt heures','vingt-deux heures'],a:1},
+  ]},
+ {lv:2,type:'message',title:'Une invitation',
+  ctx:"Un ami te laisse un message vocal.",
+  audio:"Salut ! C'est Thomas. Samedi, c'est mon anniversaire. Je fais une petite fête chez moi, à partir de vingt heures. Tu peux venir ? Apporte quelque chose à boire. À samedi j'espère !",
+  q:[
+   {q:'Pourquoi Thomas fait-il une fête ?',o:["c'est son anniversaire",'c\'est Noël','il déménage'],a:0},
+   {q:'La fête commence à quelle heure ?',o:['dix-huit heures','vingt heures','vingt-deux heures'],a:1},
+   {q:"Qu'est-ce qu'il faut apporter ?",o:['un gâteau','quelque chose à boire','un cadeau'],a:1},
+  ]},
+ {lv:3,type:'dialogue',title:'À la réception de l\'hôtel',
+  ctx:"Tu écoutes une conversation à la réception d'un hôtel.",
+  audio:"Bonjour, j'ai une réservation au nom de Martin. — Oui, une chambre pour trois nuits, c'est bien ça ? — Non, deux nuits seulement. — Ah pardon, je corrige. Chambre vingt-quatre, au deuxième étage. Le petit-déjeuner est servi de sept heures à dix heures. — Merci beaucoup.",
+  q:[
+   {q:'Combien de nuits reste le client ?',o:['deux nuits','trois nuits','une nuit'],a:0},
+   {q:'Quel est le numéro de la chambre ?',o:['vingt-quatre','quarante-deux','vingt'],a:0},
+   {q:'À quel étage ?',o:['premier','deuxième','troisième'],a:1},
+   {q:'Le petit-déjeuner finit à quelle heure ?',o:['sept heures','dix heures','midi'],a:1},
+  ]},
+ {lv:3,type:'information',title:"À l'école de langues",
+  ctx:"Tu écoutes une information à l'école de langues.",
+  audio:"Bonjour à tous. Les cours de français commencent lundi prochain. Le cours du matin est de neuf heures à midi, et le cours du soir de dix-huit heures à vingt heures. Les inscriptions se font au bureau numéro trois, avant vendredi.",
+  q:[
+   {q:'Quand commencent les cours ?',o:['lundi prochain','vendredi','ce soir'],a:0},
+   {q:'Le cours du soir finit à quelle heure ?',o:['dix-huit heures','vingt heures','vingt et une heures'],a:1},
+   {q:'Où faut-il s\'inscrire ?',o:['au bureau trois','au bureau treize','au bureau deux'],a:0},
+   {q:'Avant quel jour ?',o:['avant lundi','avant vendredi','avant samedi'],a:1},
+  ]},
+ {lv:3,type:'annonce',title:"À l'aéroport",
+  ctx:"Tu es à l'aéroport. Tu entends cette annonce.",
+  audio:"Votre attention s'il vous plaît. Le vol numéro deux cent quinze à destination de Casablanca est retardé. Le nouveau départ est prévu à dix-neuf heures quarante-cinq, porte numéro douze. Nous vous prions de nous excuser.",
+  q:[
+   {q:'Le vol va où ?',o:['à Casablanca','à Cannes','à Caracas'],a:0},
+   {q:'Quel est le problème ?',o:["le vol est annulé",'le vol est retardé','le vol est complet'],a:1},
+   {q:'Quel est le nouveau départ ?',o:['dix-neuf heures quarante-cinq','neuf heures quarante-cinq','dix-neuf heures quinze'],a:0},
+   {q:'Quelle porte ?',o:['porte douze','porte deux','porte vingt'],a:0},
+  ]},
+ {lv:3,type:'message',title:'Confirmation du restaurant',
+  ctx:"Tu écoutes un message du restaurant.",
+  audio:"Bonjour Madame Dupont, c'est le restaurant Le Jardin. Je confirme votre réservation pour quatre personnes, ce vendredi à vingt heures trente. Si vous voulez changer, appelez-nous avant jeudi soir. Bonne journée.",
+  q:[
+   {q:'Pour combien de personnes ?',o:['deux','quatre','huit'],a:1},
+   {q:'Quel jour est la réservation ?',o:['jeudi','vendredi','samedi'],a:1},
+   {q:'À quelle heure ?',o:['vingt heures','vingt heures trente','huit heures trente'],a:1},
+  ]},
+];
+let ecI=0,ecAns={},ecShown=false,ecPlays=0,ecBusy=false;
+const EC_MAX=2;   // DELF plays each document twice. No third chance.
+function ecSaveSess(){saveSession('ecoute',{ecI:ecI,ecAns:ecAns,ecShown:ecShown,ecPlays:ecPlays});}
+function ecRestore(){var s=loadSession('ecoute');if(s&&s.ecI!=null){ecI=s.ecI;ecAns=s.ecAns||{};ecShown=!!s.ecShown;ecPlays=s.ecPlays||0;return true;}return false;}
+function ecItem(){return ECOUTE[ecI%ECOUTE.length];}
+function ecStop(){try{speechSynthesis.cancel();}catch(e){}ecBusy=false;}
+function ecLoad(i){ecStop();ecI=(i+ECOUTE.length)%ECOUTE.length;ecAns={};ecShown=false;ecPlays=0;ecSaveSess();ecRender();}
+function ecPlay(slow){
+  if(ecBusy)return;
+  if(!ecShown&&ecPlays>=EC_MAX)return;
+  if(!ecShown)ecPlays++;
+  ecBusy=true;ecSaveSess();ecRender();
+  var done=function(){if(ecBusy){ecBusy=false;ecRender();}};
+  say(ecItem().audio,{rate:slow?0.7:0.95,onend:done});
+  setTimeout(done,60000);            // safety net if onend never fires
+}
+function ecAnswer(qi,oi){if(ecShown)return;ecAns[qi]=oi;ecSaveSess();ecRender();}
+function ecCheck(){
+  ecShown=true;var it=ecItem(),sc=0;
+  it.q.forEach(function(qq,i){if(ecAns[i]===qq.a)sc++;});
+  PROG.ecoBest=PROG.ecoBest||{};PROG.ecoBest[ecI]=Math.max(PROG.ecoBest[ecI]||0,sc);
+  PROG.ecoDone=PROG.ecoDone||{};PROG.ecoDone[ecI]=true;progSave();
+  if(sc<it.q.length)addWeak('Écoute',it.audio);
+  ecSaveSess();ecRender();
+}
+function ecCard(){
+  var it=ecItem(),n=it.q.length;
+  var answered=Object.keys(ecAns).length;
+  var sc=ecShown?it.q.reduce(function(a,qq,i){return a+(ecAns[i]===qq.a?1:0);},0):0;
+  var left=EC_MAX-ecPlays;
+  var counter=ecShown?'Réécoute libre':(left>0?(left+' écoute'+(left>1?'s':'')+' restante'+(left>1?'s':'')):"Plus d'écoute — réponds maintenant");
+  return '<div class="card">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+      '<h3 style="margin:0">'+icon('headphones')+' '+esc(it.title)+' <span class="muted" style="font-size:12px;font-weight:600">· niveau '+it.lv+' · document '+(ecI+1)+'/'+ECOUTE.length+'</span></h3>'+
+      '<span class="pill">'+esc(it.type)+'</span>'+
+    '</div>'+
+    callout(esc(it.ctx))+
+    '<div class="ec-bar">'+
+      '<button class="btn ec-play" onclick="ecPlay(0)"'+((ecBusy||(!ecShown&&ecPlays>=EC_MAX))?' disabled':'')+'>'+
+        icon(ecBusy?'volume':'play')+' '+(ecBusy?'Lecture…':(ecPlays===0?'Écouter':'Réécouter'))+'</button>'+
+      (ecShown?'<button class="btn ghost" onclick="ecPlay(1)"'+(ecBusy?' disabled':'')+'>'+icon('turtle')+' Lentement</button>':'')+
+      '<span class="ec-count'+((!ecShown&&left<=0)?' spent':'')+'">'+counter+'</span>'+
+    '</div>'+
+    (ecShown
+      ? '<div class="ec-tr"><div class="muted" style="font-size:11px;letter-spacing:.08em;font-weight:800;margin-bottom:6px">TRANSCRIPTION</div>'+esc(it.audio)+'</div>'
+      : '<div class="ec-tr locked">'+icon('ear')+' La transcription reste cachée jusqu\'à tes réponses — comme le jour de l\'examen.</div>')+
+    '<h3 style="margin-top:18px">'+icon('help')+' Questions</h3>'+
+    it.q.map(function(qq,i){
+      return '<div style="margin:12px 0"><div class="q" style="font-size:var(--f-md);margin-bottom:7px">'+(i+1)+'. '+esc(qq.q)+'</div>'+
+        qq.o.map(function(op,oi){
+          var chosen=ecAns[i]===oi,cls='quizopt';
+          if(ecShown){if(oi===qq.a)cls+=' correct';else if(chosen)cls+=' wrong';}
+          else if(chosen)cls+=' correct';
+          return '<button class="'+cls+'"'+(ecShown?' disabled':'')+' onclick="ecAnswer('+i+','+oi+')">'+esc(op)+'</button>';
+        }).join('')+'</div>';
+    }).join('')+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+      (ecShown?'':'<button class="btn" onclick="ecCheck()"'+(answered<n?' disabled':'')+'>'+icon('check')+' Vérifier ('+answered+'/'+n+')</button>')+
+      (ecShown?'<span class="btn ghost" style="pointer-events:none">'+icon('award')+' '+sc+'/'+n+' correct</span>':'')+
+      (ecShown?'<button class="btn ghost" onclick="askAI(\'Écoute\','+sattr("Voici un document audio DELF A1 : « "+it.audio+" ». Explique-moi les mots que je risque de ne pas entendre, et donne-moi 3 astuces concrètes pour mieux repérer les chiffres, les heures et les prix à l'oral en français.")+')">'+icon('brain')+' Aide-moi à mieux entendre</button>':'')+
+    '</div>'+
+    '<div class="fond-nav">'+
+      '<button class="btn ghost" onclick="ecLoad('+(ecI-1)+')">'+icon('arrow-l')+' Document précédent</button>'+
+      '<button class="btn ghost" onclick="ecLoad('+(ecI+1)+')">Document suivant '+icon('arrow-r')+'</button>'+
+    '</div>'+
+  '</div>';
+}
+TABS['Écoute']=function(){return fhero('headphones','Écoute — compréhension de l\'oral','La partie qui fait rater le DELF A1. Ici tu écoutes SANS le texte, deux fois maximum, exactement comme à l\'examen. La transcription arrive seulement après tes réponses.')+ecCard();};
+function ecRender(){var el=document.querySelector('[data-tab="Écoute"]');if(el&&el.classList.contains('active')){el.innerHTML=TABS['Écoute']();if(EN)applyEN(el);}}
+
 const READING=[
  {lv:1,title:'Se présenter',text:
    "Bonjour ! Je m'appelle Sophie. J'ai vingt-cinq ans. Je viens de Lyon, mais j'habite à Paris maintenant. "+
@@ -3695,14 +3879,14 @@ const BUCKETS=[
  {id:'Accueil',   icon:'home',  t:['Départ','Mon Profil','Points faibles']},
  {id:'Fondations',icon:'layers',t:['Alphabet','Accents','Sons','Grammaire']},
  {id:'Apprendre', icon:'grad',  t:['Leçons','Anatomie']},
- {id:'Lire & écrire',icon:'book-open',t:['Lecture','Écriture']},
+ {id:'Épreuves',icon:'book-open',t:['Écoute','Lecture','Écriture']},
  {id:'Pratiquer', icon:'mic',   t:['Chunks','Prononciation','Blocs','Jeux','Conversation','Examen']},
  {id:'Références', icon:'grid',  t:['Vocabulaire','Chiffres & Heure']},
 ];
 const TABIC={'Départ':'home','Mon Profil':'user','Points faibles':'target','Alphabet':'type','Accents':'flag',
  'Sons':'waveform','Grammaire':'book','Leçons':'book-open','Anatomie':'scan','Chunks':'headphones','Prononciation':'mic',
  'Blocs':'layers','Jeux':'grid','Conversation':'message','Examen':'award','Vocabulaire':'grid','Chiffres & Heure':'hash',
- 'Lecture':'book-open','Écriture':'type'};
+ 'Lecture':'book-open','Écriture':'type','Écoute':'headphones'};
 const ALLTABS=BUCKETS.flatMap(b=>b.t);
 const nav=document.getElementById('nav'),sub=document.getElementById('subnav'),mainEl=document.querySelector('main');
 ALLTABS.forEach(name=>{const d=document.createElement('div');d.className='tab';d.dataset.tab=name;mainEl.appendChild(d);});
@@ -3729,13 +3913,14 @@ function injectFS(tab){
 function show(name){
   closeMenu();
   if(name!=='Chunks'){try{stopLoop();if(SES.on)sesStop();}catch(e){}}  // no orphaned audio
+  try{ecStop();}catch(e){}
   try{arStop();}catch(e){}   // show() re-renders Lecture + cancels speech; never leave AR half-live
   const b=BUCKETS.find(x=>x.t.includes(name))||BUCKETS[0];
   [...nav.children].forEach(x=>x.classList.toggle('active',x.dataset.bucket===b.id));
   renderSub(b,name);
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   const t=document.querySelector(`[data-tab="${name}"]`);const first=!t.dataset.loaded;
-  const reload=['Départ','Mon Profil','Leçons','Points faibles','Chunks','Alphabet','Accents','Sons','Jeux','Lecture','Écriture'];
+  const reload=['Départ','Mon Profil','Leçons','Points faibles','Chunks','Alphabet','Accents','Sons','Jeux','Écoute','Lecture','Écriture'];
   if(first||reload.includes(name)){t.innerHTML=TABS[name]();t.dataset.loaded=1;}
   injectFS(t);
   if(name==='Vocabulaire'&&first)initFC();
@@ -3753,6 +3938,7 @@ if(!scrTiles.length)scrDeal();
 if(!bbRestore())bbLoad(0);
 readRestore();
 writeRestore();
+ecRestore();
 show('Départ');
 if(EN){const btn=document.getElementById('enToggle');if(btn){btn.classList.add('active');btn.innerHTML=icon('globe')+' Français';}applyEN(document.body);}
 initAuth();
