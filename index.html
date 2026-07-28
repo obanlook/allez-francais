@@ -572,6 +572,29 @@
   .user-bar button{padding:4px 10px;font-size:11px;border-radius:8px;background:var(--card2);
     border:1px solid var(--line2);color:var(--ink);cursor:pointer}
   .user-bar button:hover{border-color:var(--fr)}
+  /* ---- assisted reading (karaoke) ---- */
+  .ar-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 4px;padding:10px 12px;
+    background:var(--card2);border:1px solid var(--line);border-radius:var(--r);transition:border-color .2s var(--ease)}
+  .ar-bar.live{border-color:var(--fr);box-shadow:0 0 0 3px color-mix(in srgb,var(--fr) 14%,transparent)}
+  .ar-bar .ar-grp{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);font-weight:600}
+  .ar-bar select{background:var(--card3);color:var(--ink);border:1px solid var(--line2);border-radius:8px;
+    padding:5px 7px;font-size:12px;font-weight:700;cursor:pointer}
+  .ar-bar input[type=range]{width:86px;accent-color:var(--fr);cursor:pointer}
+  .ar-bar .ar-val{font-variant-numeric:tabular-nums;color:var(--ink2);min-width:38px}
+  #arPos{font-variant-numeric:tabular-nums;font-size:12px;color:var(--faint);margin-left:auto}
+  .ar-text{font-size:var(--f-md);line-height:2.05;margin-top:10px}
+  .arw{cursor:pointer;border-radius:5px;padding:1px 2px;margin:0 -1px;
+    transition:background-color .12s var(--ease),color .12s var(--ease)}
+  .arw:hover{background:color-mix(in srgb,var(--fr) 18%,transparent)}
+  .arw.on{background:var(--accent);color:#241a05;font-weight:800;
+    box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 40%,transparent)}
+  :root[data-theme="light"] .arw.on{color:#3a2a05}
+  @media(max-width:768px){
+    .ar-bar{gap:8px;padding:9px 10px}
+    .ar-bar input[type=range]{width:64px}
+    #arPos{width:100%;margin-left:0;text-align:right}
+  }
+  @media(prefers-reduced-motion:reduce){.arw{transition:none}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -598,6 +621,7 @@
  <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 3a3 3 0 00-3 3 3 3 0 00-2 5 3 3 0 001 5 3 3 0 004 3V3z"/><path d="M15 3a3 3 0 013 3 3 3 0 012 5 3 3 0 01-1 5 3 3 0 01-4 3V3z"/></symbol>
  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8V4z"/></symbol>
  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+ <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol>
  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
@@ -3283,7 +3307,7 @@ const READING=[
 let readI=0,readAns={},readShown=false;
 function readSaveSess(){saveSession('read',{readI:readI,readAns:readAns,readShown:readShown});}
 function readRestore(){var ss=loadSession('read');if(ss&&ss.readI!=null){readI=ss.readI;readAns=ss.readAns||{};readShown=!!ss.readShown;return true;}return false;}
-function readLoad(i){readI=(i+READING.length)%READING.length;readAns={};readShown=false;readSaveSess();gamesRenderLE();}
+function readLoad(i){try{arStop();}catch(e){}readI=(i+READING.length)%READING.length;readAns={};readShown=false;readSaveSess();gamesRenderLE();}
 function readPassage(){return READING[readI];}
 function readAnswer(qi,oi){if(readShown)return;readAns[qi]=oi;readSaveSess();gamesRenderLE();}
 function readCheck(){readShown=true;readSaveSess();
@@ -3291,15 +3315,152 @@ function readCheck(){readShown=true;readSaveSess();
   PROG.readBest=PROG.readBest||{};PROG.readBest[readI]=Math.max(PROG.readBest[readI]||0,score);
   PROG.readDone=PROG.readDone||{};PROG.readDone[readI]=true;progSave();gamesRenderLE();
 }
+/* ==================== ASSISTED READING (karaoke) ====================
+   Word-level highlight synced to the voice. Primary path = the utterance's own
+   boundary events (real engine positions, sample-accurate). Fallback = estimated
+   per-word timing, armed only if no boundary arrives shortly after start — Safari
+   and several mobile engines never fire it. Rate/volume are baked into an
+   utterance at speak() time, so changing them re-speaks from the current word. */
+var AR={on:false,paused:false,hard:false,ti:-1,toks:[],text:'',utt:null,
+        est:null,estI:0,gotB:false,armTimer:null,keep:null,rate:0.85,vol:1};
+try{AR.rate=parseFloat(localStorage.getItem('frar_rate'))||0.85;
+    AR.vol=parseFloat(localStorage.getItem('frar_vol'));if(isNaN(AR.vol))AR.vol=1;}catch(e){}
+function arTokenize(t){var o=[],re=/[\p{L}\p{N}]+(?:[’'][\p{L}]+)*/gu,m;
+  while((m=re.exec(t))!==null)o.push({s:m.index,e:m.index+m[0].length,w:m[0]});return o;}
+function arSync(){var p=readPassage();
+  if(AR.text!==p.text){AR.text=p.text;AR.toks=arTokenize(p.text);AR.ti=-1;}return p;}
+function arHTML(t){var k=arTokenize(t),out='',last=0;
+  for(var i=0;i<k.length;i++){out+=esc(t.slice(last,k[i].s));
+    out+='<span class="arw" data-t="'+i+'" onclick="arSeek('+i+')">'+esc(k[i].w)+'</span>';last=k[i].e;}
+  return out+esc(t.slice(last));}
+function arPaintWord(i){var box=document.getElementById('arText');if(!box)return;
+  var prev=box.querySelector('.arw.on');if(prev)prev.classList.remove('on');
+  var el=box.querySelector('.arw[data-t="'+i+'"]');
+  if(el){el.classList.add('on');var r=el.getBoundingClientRect();
+    if(r.top<70||r.bottom>window.innerHeight-70)el.scrollIntoView({block:'center',behavior:'smooth'});}
+  var c=document.getElementById('arPos');if(c)c.textContent=(i+1)+' / '+AR.toks.length;}
+function arPaintCtl(){var b=document.getElementById('arPlay');if(!b)return;
+  var live=AR.on&&!AR.paused;
+  b.innerHTML=icon(live?'pause':'play')+' '+(live?'Pause':(AR.on?'Reprendre':'Écouter en suivant'));
+  b.classList.toggle('active',live);
+  var bar=document.getElementById('arBar');if(bar)bar.classList.toggle('live',!!AR.on);}
+/* charIndex -> token. Boundaries are monotonic, so resume the scan where we left off. */
+function arTokAt(ci){var t=AR.toks,st=(AR.ti>=0&&t[AR.ti]&&ci>=t[AR.ti].s)?AR.ti:0;
+  for(var i=st;i<t.length;i++){if(ci<t[i].e)return i;}return t.length-1;}
+function arEstDur(tok){var d=190+45*tok.w.length,after=AR.text.slice(tok.e,tok.e+2);
+  if(/^[,;:]/.test(after))d+=170;
+  if(/^[.!?…]/.test(after))d+=330;
+  return d/Math.max(.4,AR.rate);}
+function arEstStep(){if(!AR.on||AR.paused)return;var i=AR.estI;
+  if(i>=AR.toks.length)return;
+  AR.ti=i;arPaintWord(i);AR.estI=i+1;AR.est=setTimeout(arEstStep,arEstDur(AR.toks[i]));}
+/* Chrome drops long utterances after ~15s of speech; a pause/resume ping keeps it alive. */
+function arKeepAlive(){clearInterval(AR.keep);
+  AR.keep=setInterval(function(){
+    if(!AR.on){clearInterval(AR.keep);AR.keep=null;return;}
+    if(AR.paused)return;
+    try{if(speechSynthesis.speaking){speechSynthesis.pause();speechSynthesis.resume();}}catch(e){}
+  },9000);}
+function arHalt(){clearTimeout(AR.armTimer);AR.armTimer=null;
+  if(AR.est){clearTimeout(AR.est);AR.est=null;}
+  if(AR.utt){AR.utt.onend=null;AR.utt.onboundary=null;AR.utt.onerror=null;AR.utt=null;}
+  try{speechSynthesis.cancel();}catch(e){}}
+function arSpeakFrom(i){
+  if(!AR.toks.length)return;
+  if(i<0||i>=AR.toks.length)i=0;
+  arHalt();
+  AR.ti=i;AR.estI=i;AR.gotB=false;AR.on=true;AR.paused=false;AR.hard=false;
+  var from=AR.toks[i].s;
+  var u=new SpeechSynthesisUtterance(AR.text.slice(from));
+  var v=currentVoice();if(v){u.voice=v;u.lang=v.lang;}else{u.lang='fr-FR';}
+  u.rate=AR.rate;u.volume=AR.vol;
+  u.onboundary=function(e){
+    if(e.name&&e.name!=='word')return;            // ignore sentence-level marks
+    AR.gotB=true;
+    clearTimeout(AR.armTimer);AR.armTimer=null;   // engine is driving; never arm the estimate
+    if(AR.est){clearTimeout(AR.est);AR.est=null;}
+    var k=arTokAt(from+(e.charIndex||0));
+    if(k>=0){AR.ti=k;arPaintWord(k);}
+  };
+  /* Arm the estimate only once audio has REALLY started. Engines can sit ~2s between
+     speak() and first sound; arming off speak() would run the highlight ahead and then
+     get yanked backwards when the true boundaries land. */
+  u.onstart=function(){clearTimeout(AR.armTimer);AR.armTimer=setTimeout(arArm,900);};
+  u.onend=function(){if(AR.on)arFinish();};
+  u.onerror=function(){if(AR.on)arFinish();};
+  AR.utt=u;arPaintWord(i);arPaintCtl();
+  setTimeout(function(){try{speechSynthesis.speak(u);}catch(e){}},50);
+  AR.armTimer=setTimeout(arArm,3000);   // backstop: engines that fire neither onstart nor boundary
+  arKeepAlive();}
+function arArm(){if(AR.on&&!AR.paused&&!AR.gotB){AR.estI=AR.ti;arEstStep();}}
+function arToggle(){arSync();
+  if(AR.on&&AR.paused){arResume();return;}
+  if(AR.on){arPause();return;}
+  arSpeakFrom(AR.ti>=0?AR.ti:0);}
+function arPause(){if(!AR.on||AR.paused)return;
+  AR.paused=true;
+  if(AR.est){clearTimeout(AR.est);AR.est=null;}
+  try{speechSynthesis.pause();}catch(e){}
+  /* pause() is a no-op on some mobile engines — verify, and hard-stop if ignored */
+  setTimeout(function(){
+    try{if(AR.paused&&speechSynthesis.speaking&&!speechSynthesis.paused){arHalt();AR.hard=true;}}catch(e){}
+  },250);
+  arPaintCtl();}
+function arResume(){if(!AR.on||!AR.paused)return;
+  AR.paused=false;
+  if(AR.hard){arSpeakFrom(AR.ti);return;}
+  try{speechSynthesis.resume();}catch(e){}
+  if(!AR.gotB){AR.estI=AR.ti<0?0:AR.ti;arEstStep();}
+  arPaintCtl();}
+function arStop(){
+  var was=AR.on;
+  AR.on=false;AR.paused=false;AR.hard=false;
+  arHalt();clearInterval(AR.keep);AR.keep=null;AR.ti=-1;
+  var box=document.getElementById('arText');
+  if(box){var pv=box.querySelector('.arw.on');if(pv)pv.classList.remove('on');}
+  var c=document.getElementById('arPos');if(c&&AR.toks.length)c.textContent='0 / '+AR.toks.length;
+  if(was)arPaintCtl();else arPaintCtl();}
+function arFinish(){AR.on=false;AR.paused=false;AR.hard=false;
+  arHalt();clearInterval(AR.keep);AR.keep=null;AR.ti=-1;
+  var box=document.getElementById('arText');
+  if(box){var pv=box.querySelector('.arw.on');if(pv)pv.classList.remove('on');}
+  arPaintCtl();}
+function arSeek(i){arSync();
+  if(AR.on)arSpeakFrom(i);else{AR.ti=i;arPaintWord(i);}}
+function arSetRate(v){AR.rate=parseFloat(v)||0.85;
+  try{localStorage.setItem('frar_rate',AR.rate);}catch(e){}
+  if(AR.on&&!AR.paused)arSpeakFrom(AR.ti);}
+function arVolLabel(v){var l=document.getElementById('arVolL');
+  if(l)l.textContent=Math.round(parseFloat(v)*100)+'%';}
+function arSetVol(v){AR.vol=parseFloat(v);if(isNaN(AR.vol))AR.vol=1;
+  try{localStorage.setItem('frar_vol',AR.vol);}catch(e){}
+  arVolLabel(AR.vol);
+  if(AR.on&&!AR.paused)arSpeakFrom(AR.ti);}
+function arBarHTML(){
+  var rates=[[0.6,'Très lent'],[0.75,'Lent'],[0.85,'Normal'],[1,'Naturel'],[1.15,'Rapide']];
+  return `<div class="ar-bar" id="arBar">
+    <button class="btn" id="arPlay" onclick="arToggle()">${icon('play')} Écouter en suivant</button>
+    <button class="btn ghost" onclick="arStop()" aria-label="Arrêter">${icon('stop')}</button>
+    <span class="ar-grp">${icon('turtle')} Vitesse
+      <select onchange="arSetRate(this.value)" aria-label="Vitesse de lecture">
+        ${rates.map(r=>`<option value="${r[0]}"${Math.abs(AR.rate-r[0])<0.001?' selected':''}>${r[1]}</option>`).join('')}
+      </select></span>
+    <span class="ar-grp">${icon('volume')} Volume
+      <input type="range" min="0" max="1" step="0.05" value="${AR.vol}"
+        oninput="arVolLabel(this.value)" onchange="arSetVol(this.value)" aria-label="Volume">
+      <span class="ar-val" id="arVolL">${Math.round(AR.vol*100)}%</span></span>
+    <span id="arPos">${AR.ti>=0?(AR.ti+1):0} / ${AR.toks.length}</span>
+  </div>`;}
 function readCard(){
-  const p=readPassage(),n=p.q.length;
+  const p=arSync(),n=p.q.length;
   const answered=Object.keys(readAns).length;
   const score=readShown?p.q.reduce((a,qq,i)=>a+(readAns[i]===qq.a?1:0),0):0;
   return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <h3 style="margin:0">${icon('book-open')} ${esc(p.title)} <span class="muted" style="font-size:12px;font-weight:600">· niveau ${p.lv} · texte ${readI+1}/${READING.length}</span></h3>
-      <button class="say" aria-label="Lire le texte" onclick="say(${sattr(p.text)},{rate:0.85})">${SPK}</button>
     </div>
-    <p class="aip" style="font-size:var(--f-md);line-height:1.75;margin-top:10px">${esc(p.text)}</p>
+    ${arBarHTML()}
+    <div class="ar-text" id="arText">${arHTML(p.text)}</div>
+    <p class="muted" style="font-size:12px;margin-top:6px">Suis le mot surligné en écoutant. Clique un mot pour reprendre la lecture à cet endroit.</p>
     <h3 style="margin-top:18px">${icon('help')} Compréhension</h3>
     ${p.q.map((qq,i)=>`<div style="margin:12px 0">
       <div class="q" style="font-size:var(--f-md);margin-bottom:7px">${i+1}. ${esc(qq.q)}</div>
@@ -3385,6 +3546,8 @@ TABS['Écriture']=()=>`${fhero('type','Écriture — produire un texte','Écris 
 function gamesRenderLE(keepFocus){
   ['Lecture','Écriture'].forEach(n=>{const el=document.querySelector(`[data-tab="${n}"]`);
     if(el&&el.classList.contains('active')){el.innerHTML=TABS[n]();if(EN)applyEN(el);}});
+  /* the re-render throws away the karaoke DOM — put the live word back */
+  try{if(AR.on&&AR.ti>=0)arPaintWord(AR.ti);arPaintCtl();}catch(e){}
 }
 
 const BUCKETS=[
@@ -3425,6 +3588,7 @@ function injectFS(tab){
 function show(name){
   closeMenu();
   if(name!=='Chunks'){try{stopLoop();if(SES.on)sesStop();}catch(e){}}  // no orphaned audio
+  try{arStop();}catch(e){}   // show() re-renders Lecture + cancels speech; never leave AR half-live
   const b=BUCKETS.find(x=>x.t.includes(name))||BUCKETS[0];
   [...nav.children].forEach(x=>x.classList.toggle('active',x.dataset.bucket===b.id));
   renderSub(b,name);
