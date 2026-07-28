@@ -583,6 +583,8 @@
   .ar-bar .ar-val{font-variant-numeric:tabular-nums;color:var(--ink2);min-width:38px}
   #arPos{font-variant-numeric:tabular-nums;font-size:12px;color:var(--faint);margin-left:auto}
   .ar-text{font-size:var(--f-md);line-height:2.05;margin-top:10px}
+  .ar-p{margin:0 0 15px}
+  .ar-p:last-child{margin-bottom:0}
   .arw{cursor:pointer;border-radius:5px;padding:1px 2px;margin:0 -1px;
     transition:background-color .12s var(--ease),color .12s var(--ease)}
   .arw:hover{background:color-mix(in srgb,var(--fr) 18%,transparent)}
@@ -3272,6 +3274,42 @@ const READING=[
     {q:'Quel est le métier de son père ?',o:['professeur','ingénieur','médecin'],a:2},
     {q:'Que font-ils le week-end ?',o:['ils travaillent','ils mangent ensemble','ils voyagent'],a:1},
    ]},
+ {lv:1,title:'Mon appartement',text:
+   "J'habite dans un petit appartement à Bruxelles. Il y a deux pièces : une chambre et un salon. La cuisine est petite mais claire.\n\n"+
+   "Ma fenêtre donne sur un parc. Le matin, j'entends les oiseaux. Le soir, c'est très calme. J'aime beaucoup mon appartement.",
+   q:[
+    {q:'Où habite la personne ?',o:['à Bruxelles','à Paris','à Lyon'],a:0},
+    {q:'Combien de pièces y a-t-il ?',o:['une','deux','trois'],a:1},
+    {q:'Sur quoi donne la fenêtre ?',o:['sur la rue','sur un parc','sur un jardin'],a:1},
+    {q:"Qu'entend-elle le matin ?",o:['les voitures','les oiseaux','la musique'],a:1},
+   ]},
+ {lv:1,title:'Au café',text:
+   "Il est neuf heures du matin. Paul entre dans un café près de son bureau. Il commande un café noir et un croissant.\n\n"+
+   "Le serveur apporte la commande. Paul lit son journal pendant vingt minutes. Ensuite, il paye quatre euros et il part travailler.",
+   q:[
+    {q:'À quelle heure Paul entre-t-il dans le café ?',o:['huit heures','neuf heures','dix heures'],a:1},
+    {q:"Qu'est-ce qu'il commande ?",o:['un thé et un gâteau','un café et un croissant','un jus d\'orange'],a:1},
+    {q:'Que fait-il dans le café ?',o:['il lit son journal','il téléphone','il écrit une lettre'],a:0},
+    {q:'Combien paye-t-il ?',o:['trois euros','quatre euros','cinq euros'],a:1},
+   ]},
+ {lv:1,title:'Le temps aujourd\'hui',text:
+   "Aujourd'hui, il fait froid à Bruxelles. Il pleut et il y a beaucoup de vent. Je porte un manteau noir, une écharpe rouge et des gants.\n\n"+
+   "Demain, il va faire beau. Je vais aller au parc avec mes amis. Nous allons jouer au football.",
+   q:[
+    {q:"Quel temps fait-il aujourd'hui ?",o:['il fait chaud','il fait froid et il pleut','il neige'],a:1},
+    {q:"De quelle couleur est l'écharpe ?",o:['noire','rouge','bleue'],a:1},
+    {q:'Quel temps va-t-il faire demain ?',o:['il va pleuvoir','il va faire beau','il va neiger'],a:1},
+    {q:'Que vont-ils faire au parc ?',o:['jouer au football','manger','dormir'],a:0},
+   ]},
+ {lv:1,title:"À l'hôtel",text:
+   "Madame Dubois arrive à l'hôtel à quatorze heures. Elle a une réservation pour deux nuits. La réceptionniste demande son passeport.\n\n"+
+   "La chambre numéro douze est au premier étage. Le petit-déjeuner est servi de sept heures à dix heures. Madame Dubois prend sa clé et monte dans sa chambre.",
+   q:[
+    {q:'À quelle heure arrive Madame Dubois ?',o:['treize heures','quatorze heures','quinze heures'],a:1},
+    {q:'Combien de nuits reste-t-elle ?',o:['une nuit','deux nuits','trois nuits'],a:1},
+    {q:'Que demande la réceptionniste ?',o:['son passeport','sa carte bancaire','son téléphone'],a:0},
+    {q:'Où est la chambre numéro douze ?',o:['au rez-de-chaussée','au premier étage','au deuxième étage'],a:1},
+   ]},
  {lv:2,title:'Une journée typique',text:
    "Chaque matin, je me lève à sept heures. D'abord, je prends une douche, puis je m'habille. "+
    "Ensuite, je prends le petit-déjeuner : du pain, du beurre et un café. Je vais au travail en métro. "+
@@ -3292,6 +3330,49 @@ const READING=[
     {q:'Combien coûtent ses achats ?',o:['cinq euros','cinq euros cinquante','six euros'],a:1},
     {q:'Comment paye-t-elle ?',o:['en espèces','par carte','elle ne paye pas'],a:1},
    ]},
+ {lv:2,title:'Prendre le train',text:
+   "Sarah doit aller à Anvers pour son travail. Elle arrive à la gare à huit heures moins le quart. "+
+   "Elle achète son billet au guichet et elle demande : « Le train part de quel quai ? »\n\n"+
+   "L'employé répond que le train part du quai numéro cinq. Sarah monte dans le train et trouve une place près de la fenêtre. "+
+   "Le voyage dure quarante minutes. Pendant le trajet, elle écoute de la musique et regarde le paysage.",
+   q:[
+    {q:'Où va Sarah ?',o:['à Gand','à Anvers','à Bruges'],a:1},
+    {q:'À quelle heure arrive-t-elle à la gare ?',o:['huit heures moins le quart','huit heures','huit heures et quart'],a:0},
+    {q:'De quel quai part le train ?',o:['du quai trois','du quai cinq','du quai huit'],a:1},
+    {q:'Combien de temps dure le voyage ?',o:['vingt minutes','quarante minutes','une heure'],a:1},
+   ]},
+ {lv:2,title:'Chez le médecin',text:
+   "Depuis trois jours, Thomas ne se sent pas bien. Il a mal à la tête et il tousse beaucoup. "+
+   "Ce matin, il téléphone au cabinet du docteur Martin pour prendre rendez-vous.\n\n"+
+   "La secrétaire lui propose un rendez-vous à seize heures trente. Le médecin l'examine et lui dit que ce n'est pas grave : "+
+   "c'est seulement un rhume. Il lui donne une ordonnance et lui conseille de boire beaucoup d'eau et de se reposer.",
+   q:[
+    {q:'Depuis combien de temps Thomas est-il malade ?',o:['depuis un jour','depuis trois jours','depuis une semaine'],a:1},
+    {q:'Quels sont ses symptômes ?',o:['mal au ventre','mal à la tête et il tousse','mal aux jambes'],a:1},
+    {q:'À quelle heure est le rendez-vous ?',o:['quinze heures','seize heures trente','dix-sept heures'],a:1},
+    {q:'Que conseille le médecin ?',o:['de rester au lit une semaine','de boire de l\'eau et de se reposer','de faire du sport'],a:1},
+   ]},
+ {lv:2,title:'Faire les courses',text:
+   "Camille ouvre son frigo : il est presque vide. Elle prend un papier et écrit une liste : du lait, des œufs, du riz, des tomates et du poulet.\n\n"+
+   "Au supermarché, elle ne trouve pas le riz. Elle demande à un employé, qui lui indique le rayon numéro huit. "+
+   "À la caisse, elle paye trente-deux euros. Elle rentre chez elle et prépare le dîner.",
+   q:[
+    {q:'Comment est le frigo de Camille ?',o:['plein','presque vide','cassé'],a:1},
+    {q:"Qu'est-ce qu'elle écrit ?",o:['une lettre','une liste','un message'],a:1},
+    {q:"Qu'est-ce qu'elle ne trouve pas ?",o:['le lait','le riz','le poulet'],a:1},
+    {q:'Combien paye-t-elle à la caisse ?',o:['vingt-deux euros','trente-deux euros','quarante euros'],a:1},
+   ]},
+ {lv:2,title:'Le premier jour de travail',text:
+   "Aujourd'hui, c'est le premier jour de travail de Nadia dans un grand hôtel. Elle arrive à sept heures et demie, "+
+   "trente minutes avant le début de son service. Son responsable lui présente toute l'équipe.\n\n"+
+   "Le matin, elle apprend à accueillir les clients et à répondre au téléphone. L'après-midi, elle visite les différents étages de l'hôtel. "+
+   "Le soir, elle est fatiguée mais très contente. Elle pense que ce travail va lui plaire.",
+   q:[
+    {q:'Où travaille Nadia ?',o:['dans un restaurant','dans un hôtel','dans un magasin'],a:1},
+    {q:'À quelle heure arrive-t-elle ?',o:['sept heures','sept heures et demie','huit heures'],a:1},
+    {q:"Qu'apprend-elle le matin ?",o:['à accueillir les clients','à faire la cuisine','à conduire'],a:0},
+    {q:'Comment se sent-elle le soir ?',o:['triste','fatiguée mais contente','en colère'],a:1},
+   ]},
  {lv:3,title:'Le week-end de Julien',text:
    "Julien n'aime pas rester à la maison le week-end. Samedi dernier, il est allé au cinéma avec des amis, "+
    "puis ils ont mangé dans un restaurant italien. Dimanche, il s'est levé tard parce qu'il était fatigué. "+
@@ -3302,6 +3383,58 @@ const READING=[
     {q:"Pourquoi s'est-il levé tard dimanche ?",o:['il travaillait','il était fatigué','il pleuvait'],a:1},
     {q:"Qu'a-t-il fait l'après-midi ?",o:['une promenade avec son chien','du sport','les courses'],a:0},
     {q:'Que doit-il faire lundi ?',o:['se reposer','retourner au travail','voyager'],a:1},
+   ]},
+ {lv:3,title:'Un dimanche à Bruxelles',text:
+   "Dimanche dernier, il faisait très beau à Bruxelles. Léa a décidé de sortir toute la journée au lieu de rester chez elle.\n\n"+
+   "Le matin, elle est allée au marché avec sa colocataire. Elles ont acheté du pain, du fromage et des fruits pour un pique-nique. "+
+   "Ensuite, elles ont marché jusqu'au parc du Cinquantenaire, où elles ont mangé sur l'herbe.\n\n"+
+   "L'après-midi, elles ont visité un petit musée. Léa a beaucoup aimé les tableaux, mais sa colocataire les a trouvés ennuyeux. "+
+   "Le soir, elles sont rentrées à pied. Léa a dit que c'était son meilleur dimanche depuis longtemps.",
+   q:[
+    {q:'Quel temps faisait-il dimanche ?',o:['il pleuvait','il faisait très beau','il neigeait'],a:1},
+    {q:"Qu'ont-elles acheté au marché ?",o:['des vêtements','du pain, du fromage et des fruits','des livres'],a:1},
+    {q:'Où ont-elles mangé ?',o:['au restaurant','sur l\'herbe dans le parc','chez elles'],a:1},
+    {q:'Qu\'a pensé la colocataire du musée ?',o:['elle l\'a trouvé ennuyeux','elle a adoré','elle n\'y est pas allée'],a:0},
+   ]},
+ {lv:3,title:'Une lettre à un ami',text:
+   "Cher Antoine,\n\n"+
+   "Je t'écris de Bruxelles, où je vis depuis six mois maintenant. Au début, tout était difficile : "+
+   "je ne connaissais personne et je ne comprenais presque rien quand les gens parlaient vite.\n\n"+
+   "Aujourd'hui, les choses vont beaucoup mieux. J'ai trouvé un travail dans un hôtel et je me suis fait plusieurs amis. "+
+   "Je prends aussi des cours de français deux fois par semaine, et mon professeur dit que je fais des progrès rapides.\n\n"+
+   "J'espère que tu vas bien. Quand est-ce que tu viens me rendre visite ? Il y a beaucoup de choses à voir ici.\n\n"+
+   "Amitiés, Karim",
+   q:[
+    {q:'Depuis combien de temps Karim vit-il à Bruxelles ?',o:['trois mois','six mois','un an'],a:1},
+    {q:'Pourquoi était-ce difficile au début ?',o:["il n'avait pas d'argent",'il ne connaissait personne','il était malade'],a:1},
+    {q:'Où travaille-t-il maintenant ?',o:['dans un hôtel','dans une école','dans un restaurant'],a:0},
+    {q:'Combien de fois par semaine prend-il des cours ?',o:['une fois','deux fois','trois fois'],a:1},
+   ]},
+ {lv:3,title:'Le train raté',text:
+   "Vendredi dernier, Julie devait prendre le train de dix-huit heures pour aller voir ses parents à Gand. "+
+   "Elle est partie du bureau un peu tard, mais elle pensait avoir assez de temps.\n\n"+
+   "Malheureusement, il y avait beaucoup de circulation et le bus est resté bloqué pendant vingt minutes. "+
+   "Quand Julie est enfin arrivée à la gare, le train venait de partir. Elle était très déçue.\n\n"+
+   "Elle a regardé les horaires : le train suivant partait une heure plus tard. Alors elle a acheté un sandwich, "+
+   "s'est assise sur un banc et a téléphoné à sa mère pour la prévenir. Finalement, elle est arrivée à Gand vers vingt et une heures.",
+   q:[
+    {q:'À quelle heure était le train de Julie ?',o:['dix-sept heures','dix-huit heures','dix-neuf heures'],a:1},
+    {q:'Pourquoi le bus est-il resté bloqué ?',o:['à cause de la circulation','à cause de la neige','à cause d\'un accident'],a:0},
+    {q:'Qu\'a-t-elle fait en attendant le train suivant ?',o:['elle a dormi','elle a acheté un sandwich et téléphoné','elle est rentrée chez elle'],a:1},
+    {q:'À quelle heure est-elle arrivée à Gand ?',o:['vers vingt heures','vers vingt et une heures','vers vingt-deux heures'],a:1},
+   ]},
+ {lv:3,title:'Chercher un logement',text:
+   "Quand Omar est arrivé en Belgique, il a dû chercher un logement rapidement. Pendant deux semaines, "+
+   "il a habité chez un ami, mais il voulait son propre appartement.\n\n"+
+   "Il a regardé des annonces sur Internet tous les soirs. La plupart des appartements étaient trop chers ou trop loin du centre. "+
+   "Un jour, il a vu une annonce intéressante : un studio meublé, près d'une station de métro, pour six cents euros par mois.\n\n"+
+   "Il a visité le studio le lendemain. La pièce était petite mais lumineuse, et le quartier lui a plu tout de suite. "+
+   "Il a signé le contrat la semaine suivante. Aujourd'hui, il dit souvent que c'était la meilleure décision de son année.",
+   q:[
+    {q:'Où Omar a-t-il habité pendant deux semaines ?',o:['à l\'hôtel','chez un ami','dans un studio'],a:1},
+    {q:'Quel était le problème avec la plupart des appartements ?',o:['trop petits','trop chers ou trop loin','trop bruyants'],a:1},
+    {q:'Combien coûte le studio par mois ?',o:['cinq cents euros','six cents euros','sept cents euros'],a:1},
+    {q:'Quand a-t-il signé le contrat ?',o:['le lendemain','la semaine suivante','le mois suivant'],a:1},
    ]},
 ];
 let readI=0,readAns={},readShown=false;
@@ -3329,10 +3462,18 @@ function arTokenize(t){var o=[],re=/[\p{L}\p{N}]+(?:[’'][\p{L}]+)*/gu,m;
   while((m=re.exec(t))!==null)o.push({s:m.index,e:m.index+m[0].length,w:m[0]});return o;}
 function arSync(){var p=readPassage();
   if(AR.text!==p.text){AR.text=p.text;AR.toks=arTokenize(p.text);AR.ti=-1;}return p;}
-function arHTML(t){var k=arTokenize(t),out='',last=0;
-  for(var i=0;i<k.length;i++){out+=esc(t.slice(last,k[i].s));
+/* Blank lines in the source text become real paragraphs. Token indices stay GLOBAL
+   across paragraphs so boundary charIndex still maps straight onto the full string. */
+function arHTML(t){var k=arTokenize(t),out='<p class="ar-p">',last=0;
+  for(var i=0;i<k.length;i++){
+    var gap=t.slice(last,k[i].s);
+    if(/\n[ \t]*\n/.test(gap)){
+      var parts=gap.split(/\n[ \t]*\n/);
+      out+=esc(parts[0].replace(/\s+$/,''));
+      for(var g=1;g<parts.length;g++)out+='</p><p class="ar-p">'+esc(parts[g].replace(/^\s+/,''));
+    }else out+=esc(gap);
     out+='<span class="arw" data-t="'+i+'" onclick="arSeek('+i+')">'+esc(k[i].w)+'</span>';last=k[i].e;}
-  return out+esc(t.slice(last));}
+  return out+esc(t.slice(last))+'</p>';}
 function arPaintWord(i){var box=document.getElementById('arText');if(!box)return;
   var prev=box.querySelector('.arw.on');if(prev)prev.classList.remove('on');
   var el=box.querySelector('.arw[data-t="'+i+'"]');
