@@ -594,6 +594,22 @@
     border:1px solid var(--line);font-size:var(--f-md);line-height:1.75}
   .ec-tr.locked{background:transparent;border:1.5px dashed var(--line2);color:var(--faint);
     display:flex;align-items:center;gap:9px;font-size:var(--f-sm)}
+  /* ---- production ecrite (DELF) ---- */
+  .fiche{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .fiche-row{display:flex;flex-direction:column;gap:4px}
+  .fiche-l{font-size:11px;letter-spacing:.06em;font-weight:800;color:var(--muted);text-transform:uppercase}
+  .fiche-row input{background:var(--card2);border:1px solid var(--line2);border-radius:9px;
+    padding:9px 11px;color:var(--ink);font-size:var(--f-sm);font-weight:600;width:100%}
+  .fiche-row input:focus{outline:none;border-color:var(--fr)}
+  .w-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
+  .w-count,.w-flag{font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;
+    background:var(--card2);border:1px solid var(--line2);color:var(--muted)}
+  .w-count.ok,.w-flag.ok{color:var(--good);border-color:color-mix(in srgb,var(--good) 55%,transparent);
+    background:color-mix(in srgb,var(--good) 14%,var(--card2))}
+  .w-grid{margin-top:7px;display:flex;flex-direction:column;gap:3px}
+  .w-row{font-size:var(--f-sm);color:var(--bad);font-weight:600}
+  .w-row.ok{color:var(--good)}
+  @media(max-width:640px){.fiche{grid-template-columns:1fr}}
   .arw{cursor:pointer;border-radius:5px;padding:1px 2px;margin:0 -1px;
     transition:background-color .12s var(--ease),color .12s var(--ease)}
   .arw:hover{background:color-mix(in srgb,var(--fr) 18%,transparent)}
@@ -3809,64 +3825,203 @@ function readCard(){
 }
 TABS['Lecture']=()=>`${fhero('book-open','Lecture — comprendre un texte','Lis le texte à voix basse, puis à voix haute (🔊 pour le modèle), puis réponds aux questions sans regarder le texte si possible.')}${readCard()}`;
 
+/* ==================== PRODUCTION ECRITE - format DELF A1 ====================
+   The real paper is two fixed exercises, not free writing:
+     ex.1 complete a form (fiche)      -> 10 pts
+     ex.2 a ~40-word message           -> 10 pts
+   Ex.2 is marked on a grid that includes "correction sociolinguistique":
+   a greeting and a sign-off are worth a point on their own, and that single
+   point is the one candidates most often throw away. So we check for them. */
 const WRITING=[
- {t:'Présente-toi',prompt:"Écris 4-5 phrases pour te présenter : ton nom, ton pays, ta ville, tes langues et ton métier.",
-  hint:'Je m’appelle… / Je viens de… / J’habite à… / Je parle… / Je suis…',min:20},
- {t:'Ta journée',prompt:"Décris ta routine du matin en 3-4 phrases. Utilise d'abord, ensuite, puis, enfin.",
-  hint:'D’abord, je… Ensuite, je… Enfin, je…',min:20},
- {t:'Ta famille',prompt:"Décris ta famille : qui sont-ils, où habitent-ils, que font-ils ?",
-  hint:'J’ai … frères/sœurs. Mon père est… Ma mère est…',min:20},
- {t:'Un email au café',prompt:"Écris un court message pour réserver une table dans un restaurant pour deux personnes samedi soir.",
-  hint:'Bonjour, je voudrais réserver… Nous sommes deux personnes…',min:15},
- {t:'Ton week-end',prompt:"Raconte ce que tu as fait le week-end dernier, en 4-5 phrases.",
-  hint:'Samedi, je suis allé(e)… Dimanche, j’ai…',min:20},
- {t:'La météo',prompt:"Décris le temps qu'il fait aujourd'hui et ce que tu vas faire à cause de la météo.",
-  hint:'Il fait… Il y a… Je vais…',min:15},
+ {kind:'fiche',t:"Fiche d'inscription — école de langues",min:0,
+  prompt:"Tu veux t'inscrire à un cours de français. Complète cette fiche d'inscription.",
+  fields:[
+   {k:'nom',l:'NOM'},{k:'prenom',l:'Prénom'},
+   {k:'nat',l:'Nationalité'},{k:'naiss',l:'Date de naissance',ph:'JJ/MM/AAAA',v:'date'},
+   {k:'adr',l:'Adresse'},{k:'cp',l:'Code postal',v:'num'},
+   {k:'ville',l:'Ville'},{k:'pays',l:'Pays'},
+   {k:'tel',l:'Téléphone',v:'tel'},{k:'mail',l:'Courriel',v:'mail'},
+   {k:'prof',l:'Profession'},{k:'lang',l:'Langues parlées'},
+  ]},
+ {kind:'message',t:'Carte postale de vacances',min:40,
+  prompt:"Tu es en vacances à Nice. Tu écris une carte postale à un ami français. Tu dis où tu es, avec qui tu es, quel temps il fait et ce que tu fais. (40 mots minimum)",
+  points:['Où tu es','Avec qui','Le temps','Une activité'],
+  hint:"Cher / Chère… · Je suis à… · Il fait… · Je visite… · À bientôt !"},
+ {kind:'fiche',t:"Fiche d'hôtel",min:0,
+  prompt:"Tu arrives à l'hôtel. Le réceptionniste te demande de compléter cette fiche.",
+  fields:[
+   {k:'nom',l:'NOM'},{k:'prenom',l:'Prénom'},
+   {k:'naiss',l:'Date de naissance',ph:'JJ/MM/AAAA',v:'date'},{k:'nat',l:'Nationalité'},
+   {k:'adr',l:'Adresse'},{k:'ville',l:'Ville'},{k:'pays',l:'Pays'},
+   {k:'tel',l:'Téléphone',v:'tel'},{k:'mail',l:'Courriel',v:'mail'},
+   {k:'arr',l:"Date d'arrivée",ph:'JJ/MM/AAAA',v:'date'},
+   {k:'nuits',l:'Nombre de nuits',v:'num'},{k:'pers',l:'Nombre de personnes',v:'num'},
+  ]},
+ {kind:'message',t:'Une invitation',min:40,
+  prompt:"C'est ton anniversaire samedi. Tu écris un message à tes amis pour les inviter. Tu dis quel jour, à quelle heure, où, et ce qu'il faut apporter. (40 mots minimum)",
+  points:['Le jour','L\'heure','Le lieu','Quoi apporter'],
+  hint:"Salut ! · samedi · à partir de… · chez moi · Apporte… · À samedi !"},
+ {kind:'message',t:'Annuler un rendez-vous',min:40,
+  prompt:"Tu ne peux pas aller à ton rendez-vous avec un ami demain. Tu écris un message : tu t'excuses, tu expliques pourquoi, et tu proposes un autre jour. (40 mots minimum)",
+  points:['Excuses','La raison','Une autre date'],
+  hint:"Bonjour… · Je suis désolé(e) · parce que… · Est-ce qu'on peut… ? · À bientôt"},
+ {kind:'message',t:'Réserver une chambre',min:40,
+  prompt:"Tu écris un courriel à un hôtel à Paris pour réserver une chambre. Tu donnes les dates, le nombre de personnes, et tu demandes le prix. (40 mots minimum)",
+  points:['Les dates','Nombre de personnes','Une question sur le prix'],
+  hint:"Madame, Monsieur, · Je voudrais réserver… · du… au… · Quel est le prix… ? · Cordialement"},
+ {kind:'fiche',t:'Formulaire de bibliothèque',min:0,
+  prompt:"Tu veux une carte de bibliothèque. Complète ce formulaire.",
+  fields:[
+   {k:'nom',l:'NOM'},{k:'prenom',l:'Prénom'},
+   {k:'naiss',l:'Date de naissance',ph:'JJ/MM/AAAA',v:'date'},
+   {k:'adr',l:'Adresse'},{k:'cp',l:'Code postal',v:'num'},{k:'ville',l:'Ville'},
+   {k:'mail',l:'Courriel',v:'mail'},{k:'tel',l:'Téléphone',v:'tel'},
+   {k:'prof',l:'Profession'},{k:'lang',l:'Langues parlées'},
+  ]},
+ {kind:'message',t:'Un mot à ton colocataire',min:40,
+  prompt:"Tu pars tôt demain matin. Tu laisses un mot à ton colocataire : tu dis où tu vas, quand tu rentres, et tu lui demandes un service. (40 mots minimum)",
+  points:['Où tu vas','Quand tu rentres','Un service demandé'],
+  hint:"Salut… · Je pars à… · Je rentre… · Est-ce que tu peux… ? · Merci !"},
+ {kind:'message',t:'Remercier',min:40,
+  prompt:"Un ami t'a invité(e) à dîner chez lui. Tu écris un message pour le remercier. Tu dis ce que tu as aimé et tu proposes de te revoir. (40 mots minimum)",
+  points:['Remerciement','Ce que tu as aimé','Une proposition'],
+  hint:"Cher / Chère… · Merci beaucoup pour… · J'ai adoré… · La prochaine fois… · Bises"},
+ {kind:'message',t:'Demander des informations',min:40,
+  prompt:"Tu écris un courriel à une école de langues. Tu te présentes, tu demandes les horaires des cours et le prix. (40 mots minimum)",
+  points:['Te présenter','Question sur les horaires','Question sur le prix'],
+  hint:"Madame, Monsieur, · Je m'appelle… · Je voudrais savoir… · Quels sont les horaires… ? · Cordialement"},
+ {kind:'message',t:'Te présenter à un collègue',min:40,
+  prompt:"C'est ton premier jour de travail. Tu écris un message à un nouveau collègue : tu te présentes, tu dis d'où tu viens et ce que tu fais. (40 mots minimum)",
+  points:['Ton nom','D\'où tu viens','Ton travail'],
+  hint:"Bonjour, · Je m'appelle… · Je viens de… · Je travaille… · À bientôt"},
+ {kind:'fiche',t:'Inscription au club de sport',min:0,
+  prompt:"Tu veux t'inscrire dans un club de sport. Complète cette fiche.",
+  fields:[
+   {k:'nom',l:'NOM'},{k:'prenom',l:'Prénom'},
+   {k:'naiss',l:'Date de naissance',ph:'JJ/MM/AAAA',v:'date'},{k:'nat',l:'Nationalité'},
+   {k:'adr',l:'Adresse'},{k:'ville',l:'Ville'},
+   {k:'tel',l:'Téléphone',v:'tel'},{k:'mail',l:'Courriel',v:'mail'},
+   {k:'sport',l:'Sport choisi'},{k:'jours',l:'Jours préférés'},
+  ]},
 ];
 let writeI=0;
 function writeSaveSess(){saveSession('write',{writeI:writeI});}
 function writeRestore(){var ss=loadSession('write');if(ss&&ss.writeI!=null){writeI=ss.writeI;return true;}return false;}
-function writeLoad(i){writeI=(i+WRITING.length)%WRITING.length;writeSaveSess();gamesRenderLE();
-  const ta=document.getElementById('writeTA');if(ta)ta.value=PROG.writeDrafts?.[writeI]||'';}
-function writeSave(){const ta=document.getElementById('writeTA');if(!ta)return;
-  PROG.writeDrafts=PROG.writeDrafts||{};PROG.writeDrafts[writeI]=ta.value;progSave();}
+function writeItem(){return WRITING[writeI%WRITING.length];}
+function writeLoad(i){writeI=(i+WRITING.length)%WRITING.length;writeSaveSess();gamesRenderLE();}
+function writeWords(t){return String(t||'').trim().split(/\s+/).filter(Boolean).length;}
+/* the sociolinguistic point: A1 messages must open and close properly */
+function writeHasOpen(t){return /(cher|chère|chers|salut|bonjour|bonsoir|coucou|madame|monsieur)/i.test(t||'');}
+function writeHasClose(t){return /(à bientôt|a bientot|bises|bisous|amitiés|amities|amicalement|cordialement|au revoir|je t['\u2019]embrasse|à demain|a demain|à samedi|a samedi|merci d['\u2019]avance|bonne journée)/i.test(t||'');}
+function writeSave(){
+  var it=writeItem();PROG.writeDrafts=PROG.writeDrafts||{};
+  if(it.kind==='fiche'){
+    var o={};it.fields.forEach(function(f){var el=document.getElementById('pf_'+f.k);if(el)o[f.k]=el.value;});
+    PROG.writeDrafts[writeI]=o;
+  }else{
+    var ta=document.getElementById('writeTA');if(!ta)return;
+    PROG.writeDrafts[writeI]=ta.value;
+    var w=writeWords(ta.value),c=document.getElementById('wCount');
+    if(c){c.textContent=w+' / '+it.min+' mots';c.className='w-count'+(w>=it.min?' ok':'');}
+    var op=document.getElementById('wOpen'),cl=document.getElementById('wClose');
+    if(op)op.className='w-flag'+(writeHasOpen(ta.value)?' ok':'');
+    if(cl)cl.className='w-flag'+(writeHasClose(ta.value)?' ok':'');
+  }
+  progSave();
+}
 function writeCheck(){
-  const ta=document.getElementById('writeTA');const fb=document.getElementById('writeFB');
-  const w=WRITING[writeI];const text=(ta?.value||'').trim();
-  if(!text){fb.innerHTML='<p class="aip warn">Écris quelque chose d’abord !</p>';return;}
-  const words=text.split(/\s+/).filter(Boolean).length;
+  var it=writeItem(),fb=document.getElementById('writeFB');if(!fb)return;
   PROG.writeDone=PROG.writeDone||{};PROG.writeDone[writeI]=true;
-  PROG.writeDrafts=PROG.writeDrafts||{};PROG.writeDrafts[writeI]=text;progSave();
-  const short=words<w.min;
-  fb.innerHTML=`<div class="callout${short?' warn':''}">${icon(short?'zap':'check')}<div>
-    ${short?`<b>Un peu court</b> — tu as ${words} mots, essaie d’en écrire au moins ${w.min}.`:`<b>Bien !</b> ${words} mots écrits.`}
-    Envoie ton texte à l’IA pour une correction détaillée.</div></div>`;
-  if(EN)applyEN(fb);
+  if(it.kind==='fiche'){
+    var missing=[],bad=[];
+    it.fields.forEach(function(f){
+      var el=document.getElementById('pf_'+f.k),v=el?el.value.trim():'';
+      if(!v){missing.push(f.l);return;}
+      if(f.v==='date'&&!/^\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}$/.test(v))bad.push(f.l+' (format JJ/MM/AAAA)');
+      if(f.v==='mail'&&!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v))bad.push(f.l+' (adresse invalide)');
+      if(f.v==='num'&&!/^\d+$/.test(v))bad.push(f.l+' (chiffres seulement)');
+      if(f.v==='tel'&&!/^[\d+\s().-]{6,}$/.test(v))bad.push(f.l+' (numéro invalide)');
+    });
+    if(!missing.length&&!bad.length){
+      fb.innerHTML='<div class="callout"><span class="ok" style="font-weight:800">'+icon('check')+' Fiche complète !</span><div>Tous les champs sont remplis et bien formatés. Au DELF, cet exercice vaut 10 points — ne perds jamais de points ici.</div></div>';
+    }else{
+      fb.innerHTML='<div class="callout warn">'+icon('zap')+'<div><b>Presque.</b>'+
+        (missing.length?'<div style="margin-top:6px">Champs vides : <b>'+missing.map(esc).join(', ')+'</b></div>':'')+
+        (bad.length?'<div style="margin-top:6px">À corriger : <b>'+bad.map(esc).join(', ')+'</b></div>':'')+
+        '</div></div>';
+      addWeak('Fiche',it.t);
+    }
+  }else{
+    var ta=document.getElementById('writeTA'),txt=(ta?ta.value:'').trim();
+    if(!txt){fb.innerHTML='<p class="aip warn">Écris quelque chose d\'abord !</p>';return;}
+    var w=writeWords(txt),op=writeHasOpen(txt),cl=writeHasClose(txt);
+    var rows=[
+      ['Longueur ('+w+'/'+it.min+' mots)',w>=it.min],
+      ['Formule d\'ouverture (Cher…, Salut…, Bonjour…)',op],
+      ['Formule de politesse finale (À bientôt, Cordialement…)',cl],
+    ];
+    var ok=rows.filter(function(r){return r[1];}).length;
+    fb.innerHTML='<div class="callout'+(ok===rows.length?'':' warn')+'">'+icon(ok===rows.length?'check':'zap')+
+      '<div><b>Contrôle automatique : '+ok+'/'+rows.length+'</b>'+
+      '<div class="w-grid">'+rows.map(function(r){return '<div class="w-row'+(r[1]?' ok':'')+'">'+(r[1]?'✓':'✗')+' '+esc(r[0])+'</div>';}).join('')+'</div>'+
+      '<div class="muted" style="margin-top:8px">Vérifie aussi que tu as traité chaque point : <b>'+(it.points||[]).map(esc).join(' · ')+'</b>. '+
+      'Puis envoie ton texte à l\'IA — elle note comme un correcteur DELF.</div></div></div>';
+    if(!op||!cl||w<it.min)addWeak('Écriture',it.t);
+  }
+  progSave();if(EN)applyEN(fb);
 }
 function writeAICheck(){
-  const ta=document.getElementById('writeTA');const text=(ta?.value||'').trim();
-  if(!text)return;
-  askAI('Écriture',`Corrige ce texte français d'un niveau A1 : « ${text} ». Liste chaque erreur (grammaire, genre, conjugaison, orthographe) avec la correction et une explication très simple. Termine par une version corrigée complète du texte, entre guillemets.`);
+  var it=writeItem();
+  if(it.kind==='fiche'){
+    var lines=it.fields.map(function(f){var el=document.getElementById('pf_'+f.k);return f.l+' : '+((el&&el.value.trim())||'(vide)');}).join('\n');
+    askAI('Écriture',"Voici une fiche DELF A1 que j'ai complétée :\n"+lines+"\n\nCorrige chaque champ : orthographe, majuscules, format de la date et du téléphone, et dis-moi ce qu'un correcteur DELF A1 accepterait ou refuserait. Termine par la fiche corrigée.");
+    return;
+  }
+  var ta=document.getElementById('writeTA'),txt=(ta?ta.value:'').trim();if(!txt)return;
+  askAI('Écriture',"Corrige ce texte comme un correcteur officiel DELF A1, production écrite exercice 2.\n\nConsigne donnée : « "+it.prompt+" »\n\nMon texte : « "+txt+" »\n\n"+
+    "Note-le sur 10 en utilisant la vraie grille DELF A1 et donne le détail :\n"+
+    "1. Respect de la consigne (1 pt)\n2. Correction sociolinguistique — salutation et formule finale (1 pt)\n"+
+    "3. Capacité à informer et/ou décrire (4 pts)\n4. Lexique et orthographe lexicale (2 pts)\n5. Morphosyntaxe et orthographe grammaticale (2 pts)\n\n"+
+    "Pour chaque critère : la note, pourquoi, et comment gagner le point manquant. Liste ensuite chaque erreur avec sa correction et une explication très simple. Termine par une version corrigée complète, entre guillemets.");
 }
 function writeCard(){
-  const w=WRITING[writeI],draft=PROG.writeDrafts?.[writeI]||'';
-  return `<div class="card">
-    <h3 style="margin:0">${icon('type')} ${esc(w.t)} <span class="muted" style="font-size:12px;font-weight:600">· sujet ${writeI+1}/${WRITING.length}</span></h3>
-    <p class="aip" style="margin-top:8px">${esc(w.prompt)}</p>
-    ${callout('Aide : <span class="aifr" style="display:inline">'+esc(w.hint)+'</span> · objectif ~'+w.min+' mots')}
-    <textarea id="writeTA" rows="6" placeholder="Écris ta réponse ici…" oninput="writeSave()" style="margin-top:10px;font-size:var(--f-md);line-height:1.6">${esc(draft)}</textarea>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-      <button class="btn" onclick="writeCheck()">${icon('check')} Compter mes mots</button>
-      <button class="btn ghost" onclick="writeAICheck()">${icon('brain')} Corriger avec l’IA</button>
-    </div>
-    <div id="writeFB" style="margin-top:10px"></div>
-    <div class="fond-nav">
-      <button class="btn ghost" onclick="writeLoad(${writeI-1})">${icon('arrow-l')} Sujet précédent</button>
-      <button class="btn ghost" onclick="writeLoad(${writeI+1})">Sujet suivant ${icon('arrow-r')}</button>
-    </div>
-  </div>`;
+  var it=writeItem(),draft=(PROG.writeDrafts||{})[writeI];
+  var head='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+    '<h3 style="margin:0">'+icon(it.kind==='fiche'?'grid':'type')+' '+esc(it.t)+
+    ' <span class="muted" style="font-size:12px;font-weight:600">· sujet '+(writeI+1)+'/'+WRITING.length+'</span></h3>'+
+    '<span class="pill">'+(it.kind==='fiche'?'Exercice 1 · fiche':'Exercice 2 · message')+'</span></div>';
+  var nav='<div class="fond-nav">'+
+    '<button class="btn ghost" onclick="writeLoad('+(writeI-1)+')">'+icon('arrow-l')+' Sujet précédent</button>'+
+    '<button class="btn ghost" onclick="writeLoad('+(writeI+1)+')">Sujet suivant '+icon('arrow-r')+'</button></div>';
+  if(it.kind==='fiche'){
+    var vals=(draft&&typeof draft==='object')?draft:{};
+    return '<div class="card">'+head+'<p class="aip" style="margin-top:8px">'+esc(it.prompt)+'</p>'+
+      '<div class="fiche">'+it.fields.map(function(f){
+        return '<label class="fiche-row"><span class="fiche-l">'+esc(f.l)+'</span>'+
+          '<input id="pf_'+f.k+'" type="text" value="'+escAttr(vals[f.k]||'')+'"'+
+          (f.ph?' placeholder="'+escAttr(f.ph)+'"':'')+' oninput="writeSave()"></label>';
+      }).join('')+'</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+        '<button class="btn" onclick="writeCheck()">'+icon('check')+' Vérifier ma fiche</button>'+
+        '<button class="btn ghost" onclick="writeAICheck()">'+icon('brain')+' Corriger avec l\'IA</button></div>'+
+      '<div id="writeFB" style="margin-top:10px"></div>'+nav+'</div>';
+  }
+  var txt=(typeof draft==='string')?draft:'';
+  var w=writeWords(txt);
+  return '<div class="card">'+head+'<p class="aip" style="margin-top:8px">'+esc(it.prompt)+'</p>'+
+    callout('Points à traiter : <b>'+(it.points||[]).map(esc).join(' · ')+'</b><div class="muted" style="margin-top:5px">Aide : <span class="aifr" style="display:inline">'+esc(it.hint||'')+'</span></div>')+
+    '<textarea id="writeTA" rows="7" placeholder="Écris ton message ici…" oninput="writeSave()" style="margin-top:10px;font-size:var(--f-md);line-height:1.6">'+esc(txt)+'</textarea>'+
+    '<div class="w-bar">'+
+      '<span class="w-count'+(w>=it.min?' ok':'')+'" id="wCount">'+w+' / '+it.min+' mots</span>'+
+      '<span class="w-flag'+(writeHasOpen(txt)?' ok':'')+'" id="wOpen">salutation</span>'+
+      '<span class="w-flag'+(writeHasClose(txt)?' ok':'')+'" id="wClose">formule finale</span>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
+      '<button class="btn" onclick="writeCheck()">'+icon('check')+' Vérifier</button>'+
+      '<button class="btn ghost" onclick="writeAICheck()">'+icon('brain')+' Noter comme au DELF</button></div>'+
+    '<div id="writeFB" style="margin-top:10px"></div>'+nav+'</div>';
 }
-TABS['Écriture']=()=>`${fhero('type','Écriture — produire un texte','Écris librement, sans avoir peur des fautes. Envoie ensuite ton texte à l’IA : elle corrige chaque erreur et explique pourquoi, comme un prof patient.')}${writeCard()}`;
+TABS['Écriture']=function(){return fhero('type','Écriture — production écrite','Le format réel du DELF A1 : une fiche à compléter (10 pts) et un message d\'environ 40 mots (10 pts). Le message doit toujours commencer par une salutation et finir par une formule de politesse — c\'est un point entier de la grille.')+writeCard();};
 /* shared re-render for the tabs added in this module (keeps textarea state where possible) */
 function gamesRenderLE(keepFocus){
   ['Lecture','Écriture'].forEach(n=>{const el=document.querySelector(`[data-tab="${n}"]`);
