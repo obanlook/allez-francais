@@ -617,6 +617,23 @@
   .po-p span{display:block;font-size:11px;color:var(--accent);font-weight:700;margin:3px 0 6px}
   .po-p p{margin:0 0 10px;font-size:12px;color:var(--muted);line-height:1.55}
   @media(max-width:760px){.po-parts{grid-template-columns:1fr}}
+  /* ---- examen blanc (timed mock) ---- */
+  .mock-on #aiFab{display:none}
+  .mk-head{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;
+    gap:10px;flex-wrap:wrap;padding:11px 14px;margin-bottom:10px;border-radius:var(--r);
+    background:var(--card2);border:1px solid var(--line2)}
+  .mk-clock{font-variant-numeric:tabular-nums;font-size:22px;font-weight:800;color:var(--good)}
+  .mk-clock.low{color:var(--bad)}
+  .mk-sheet{width:100%;border-collapse:collapse;margin:10px 0;font-size:var(--f-sm)}
+  .mk-sheet th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line2)}
+  .mk-sheet td{padding:9px 8px;border-bottom:1px solid var(--line)}
+  .mk-total{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+    margin-top:12px;padding:14px 16px;border-radius:var(--r);border:1.5px solid var(--line2);background:var(--card2)}
+  .mk-total.pass{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--card2))}
+  .mk-total.fail{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card2))}
+  .mk-big{font-size:34px;font-weight:800;color:var(--ink)}
+  .mk-verdict{font-weight:700;font-size:var(--f-sm)}
   .arw{cursor:pointer;border-radius:5px;padding:1px 2px;margin:0 -1px;
     transition:background-color .12s var(--ease),color .12s var(--ease)}
   .arw:hover{background:color-mix(in srgb,var(--fr) 18%,transparent)}
@@ -1862,6 +1879,216 @@ function newClock(){const h=(Math.random()*12|0)||12;const mm=[0,5,10,15,20,30,4
 function setHand(id,deg,len){const el=document.getElementById(id);const r=(deg-90)*Math.PI/180;el.setAttribute('x2',(50+len*Math.cos(r)).toFixed(1));el.setAttribute('y2',(50+len*Math.sin(r)).toFixed(1));}
 
 /* ==================== EXAMEN launcher ==================== */
+/* ==================== EXAMEN BLANC - full timed DELF A1 mock ====================
+   Real conditions: real per-paper timings, no Ask AI, no transcripts, no per-answer
+   feedback until the whole thing is submitted. Scored the way DELF scores:
+   /25 per paper, /100 total, pass at 50 AND at least 5/25 in every paper.
+   CO and CE are objective MCQ so those marks are real. PE is only partly
+   auto-markable (format + length + register); the content half needs a human or
+   the AI, and the sheet says so rather than inventing a number. */
+const MK_PLAN=[
+ {k:'co',label:"Compréhension de l'oral",short:'CO',min:20,n:3},
+ {k:'ce',label:'Compréhension des écrits',short:'CE',min:30,n:2},
+ {k:'pe',label:'Production écrite',short:'PE',min:30,n:2},
+];
+var MK={on:false,si:0,items:{},ans:{},plays:{},t0:0,dead:0,timer:null,done:false,res:null};
+function mkPick(arr,n){var idx=arr.map(function(_,i){return i;});
+  for(var i=idx.length-1;i>0;i--){var j=Math.random()*(i+1)|0;var t=idx[i];idx[i]=idx[j];idx[j]=t;}
+  return idx.slice(0,n);}
+function mkStart(){
+  MK.on=true;MK.si=0;MK.done=false;MK.res=null;MK.ans={};MK.plays={};
+  MK.items={co:mkPick(ECOUTE,3),ce:mkPick(READING,2),
+            pe:[WRITING.findIndex(function(x){return x.kind==='fiche';}),
+                WRITING.findIndex(function(x){return x.kind==='message';})]};
+  document.body.classList.add('mock-on');
+  mkOpenSection(0);
+}
+function mkOpenSection(i){
+  MK.si=i;var p=MK_PLAN[i];
+  MK.t0=Date.now();MK.dead=MK.t0+p.min*60000;
+  clearInterval(MK.timer);MK.timer=setInterval(mkTick,1000);
+  mkRender();window.scrollTo(0,0);
+}
+function mkTick(){
+  var el=document.getElementById('mkClock');if(!el)return;
+  var left=MK.dead-Date.now();
+  if(left<=0){clearInterval(MK.timer);mkNext(true);return;}
+  var s=Math.round(left/1000);
+  el.textContent=(s/60|0)+':'+String(s%60).padStart(2,'0');
+  el.className='mk-clock'+(left<120000?' low':'');
+}
+function mkNext(auto){
+  try{speechSynthesis.cancel();}catch(e){}
+  if(MK.si<MK_PLAN.length-1){
+    if(!auto&&!confirm('Valider cette épreuve et passer à la suivante ? Tu ne pourras plus revenir.'))return;
+    mkOpenSection(MK.si+1);
+  }else{
+    if(!auto&&!confirm("Terminer l'examen blanc et voir tes résultats ?"))return;
+    mkFinish();
+  }
+}
+function mkQuit(){
+  if(!confirm("Abandonner l'examen blanc ? Tes réponses seront perdues."))return;
+  clearInterval(MK.timer);try{speechSynthesis.cancel();}catch(e){}
+  MK.on=false;document.body.classList.remove('mock-on');mkRender();
+}
+function mkAns(sec,di,qi,oi){MK.ans[sec+'_'+di+'_'+qi]=oi;mkRender();}
+function mkPlay(di){
+  var key='co_'+di,used=MK.plays[key]||0;if(used>=2||MK.busy)return;
+  MK.plays[key]=used+1;MK.busy=di;mkRender();
+  var done=function(){if(MK.busy===di){MK.busy=null;mkRender();}};
+  say(ECOUTE[MK.items.co[di]].audio,{rate:0.95,onend:done});
+  setTimeout(done,60000);
+}
+function mkSaveText(){
+  var ta=document.getElementById('mk_msg');if(ta)MK.ans.pe_msg=ta.value;
+  var it=WRITING[MK.items.pe[0]];
+  it.fields.forEach(function(f){var el=document.getElementById('mkf_'+f.k);if(el)MK.ans['pe_f_'+f.k]=el.value;});
+  var c=document.getElementById('mkWords');
+  if(c&&ta)c.textContent=String(ta.value||'').trim().split(/\s+/).filter(Boolean).length+' mots';
+}
+function mkFinish(){
+  clearInterval(MK.timer);MK.done=true;MK.on=false;
+  document.body.classList.remove('mock-on');
+  var r={};
+  // --- CO / CE : objective, so these marks are real ---
+  [['co',ECOUTE],['ce',READING]].forEach(function(pair){
+    var sec=pair[0],src=pair[1],got=0,tot=0;
+    MK.items[sec].forEach(function(idx,di){
+      src[idx].q.forEach(function(qq,qi){tot++;if(MK.ans[sec+'_'+di+'_'+qi]===qq.a)got++;});
+    });
+    r[sec]={got:got,tot:tot,note:tot?Math.round(got/tot*25*10)/10:0};
+  });
+  // --- PE : only the auto-markable half (format, length, register) ---
+  var fiche=WRITING[MK.items.pe[0]],okF=0,totF=fiche.fields.length;
+  fiche.fields.forEach(function(f){
+    var v=(MK.ans['pe_f_'+f.k]||'').trim();if(!v)return;
+    if(f.v==='date'&&!/^\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}$/.test(v))return;
+    if(f.v==='mail'&&!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v))return;
+    if(f.v==='num'&&!/^\d+$/.test(v))return;
+    if(f.v==='tel'&&!/^[\d+\s().-]{6,}$/.test(v))return;
+    okF++;
+  });
+  var msg=MK.ans.pe_msg||'',w=writeWords(msg);
+  var mParts=[w>=40,writeHasOpen(msg),writeHasClose(msg)];
+  var mOk=mParts.filter(Boolean).length;
+  // fiche is a full 12.5; message auto-half is 12.5 but only 3 checks of it are automatic
+  r.pe={fiche:[okF,totF],msg:{words:w,open:mParts[1],close:mParts[2],ok:mOk},
+        note:Math.round((okF/totF*12.5 + mOk/3*12.5)*10)/10,partial:true};
+  r.total=Math.round((r.co.note+r.ce.note+r.pe.note)*10)/10;
+  r.pass=r.total>=37.5 && r.co.note>=5 && r.ce.note>=5 && r.pe.note>=5;   // 3 papers of 4
+  MK.res=r;
+  PROG.mockLast={when:new Date().toISOString(),co:r.co.note,ce:r.ce.note,pe:r.pe.note,total:r.total};
+  PROG.mockBest=Math.max(PROG.mockBest||0,r.total);progSave();
+  mkRender();window.scrollTo(0,0);
+}
+function mkOpt(sec,di,qi,oi,label){
+  var chosen=MK.ans[sec+'_'+di+'_'+qi]===oi;
+  return '<button class="quizopt'+(chosen?' correct':'')+'" onclick="mkAns(\''+sec+'\','+di+','+qi+','+oi+')">'+esc(label)+'</button>';
+}
+function mkQuestions(sec,di,item){
+  return item.q.map(function(qq,qi){
+    return '<div style="margin:12px 0"><div class="q" style="font-size:var(--f-md);margin-bottom:7px">'+(qi+1)+'. '+esc(qq.q)+'</div>'+
+      qq.o.map(function(op,oi){return mkOpt(sec,di,qi,oi,op);}).join('')+'</div>';
+  }).join('');
+}
+function mkBody(){
+  var p=MK_PLAN[MK.si];
+  if(p.k==='co'){
+    return MK.items.co.map(function(idx,di){
+      var it=ECOUTE[idx],used=MK.plays['co_'+di]||0,left=2-used;
+      return '<div class="card"><h3 style="margin:0 0 4px">Document '+(di+1)+' <span class="muted" style="font-size:12px;font-weight:600">· '+esc(it.type)+'</span></h3>'+
+        '<p class="muted" style="font-size:13px;margin:0 0 8px">'+esc(it.ctx)+'</p>'+
+        '<div class="ec-bar"><button class="btn" onclick="mkPlay('+di+')"'+((MK.busy!=null||left<=0)?' disabled':'')+'>'+
+          icon(MK.busy===di?'volume':'play')+' '+(MK.busy===di?'Lecture…':(used===0?'Écouter':'Réécouter'))+'</button>'+
+          '<span class="ec-count'+(left<=0?' spent':'')+'">'+(left>0?(left+' écoute'+(left>1?'s':'')+' restante'+(left>1?'s':'')):'Plus d\'écoute')+'</span></div>'+
+        mkQuestions('co',di,it)+'</div>';
+    }).join('');
+  }
+  if(p.k==='ce'){
+    return MK.items.ce.map(function(idx,di){
+      var it=READING[idx];
+      return '<div class="card"><h3 style="margin:0 0 8px">Texte '+(di+1)+' — '+esc(it.title)+'</h3>'+
+        '<div class="ar-text">'+it.text.split(/\n\s*\n/).map(function(par){return '<p class="ar-p">'+esc(par.trim())+'</p>';}).join('')+'</div>'+
+        mkQuestions('ce',di,it)+'</div>';
+    }).join('');
+  }
+  var fiche=WRITING[MK.items.pe[0]],msg=WRITING[MK.items.pe[1]];
+  return '<div class="card"><h3 style="margin:0 0 4px">Exercice 1 — '+esc(fiche.t)+'</h3>'+
+    '<p class="muted" style="font-size:13px">'+esc(fiche.prompt)+'</p>'+
+    '<div class="fiche">'+fiche.fields.map(function(f){
+      return '<label class="fiche-row"><span class="fiche-l">'+esc(f.l)+'</span><input id="mkf_'+f.k+'" type="text" value="'+escAttr(MK.ans['pe_f_'+f.k]||'')+'"'+(f.ph?' placeholder="'+escAttr(f.ph)+'"':'')+' oninput="mkSaveText()"></label>';
+    }).join('')+'</div></div>'+
+    '<div class="card"><h3 style="margin:0 0 4px">Exercice 2 — '+esc(msg.t)+'</h3>'+
+    '<p class="muted" style="font-size:13px">'+esc(msg.prompt)+'</p>'+
+    '<textarea id="mk_msg" rows="8" placeholder="Écris ton message ici…" oninput="mkSaveText()" style="margin-top:8px;font-size:var(--f-md);line-height:1.6">'+esc(MK.ans.pe_msg||'')+'</textarea>'+
+    '<div class="w-bar"><span class="w-count" id="mkWords">'+writeWords(MK.ans.pe_msg||'')+' mots</span></div></div>';
+}
+function mkSheet(){
+  var r=MK.res,rows=[
+    ['Compréhension de l\'oral',r.co.note,r.co.got+'/'+r.co.tot+' réponses'],
+    ['Compréhension des écrits',r.ce.note,r.ce.got+'/'+r.ce.tot+' réponses'],
+    ['Production écrite',r.pe.note,'fiche '+r.pe.fiche[0]+'/'+r.pe.fiche[1]+' · message '+r.pe.msg.ok+'/3'],
+  ];
+  return '<div class="card"><h2 style="margin-top:0">'+icon('award')+' Résultats — examen blanc</h2>'+
+    '<table class="mk-sheet"><thead><tr><th>Épreuve</th><th>Note</th><th>Détail</th><th>Min. 5</th></tr></thead><tbody>'+
+    rows.map(function(x){return '<tr><td>'+esc(x[0])+'</td><td><b>'+x[1]+'</b> / 25</td><td class="muted">'+esc(x[2])+'</td><td>'+(x[1]>=5?'<span class="ok">✓</span>':'<span style="color:var(--bad)">✗</span>')+'</td></tr>';}).join('')+
+    '</tbody></table>'+
+    '<div class="mk-total'+(r.pass?' pass':' fail')+'">'+
+      '<div><span class="mk-big">'+r.total+'</span> / 75 <span class="muted">(3 épreuves sur 4)</span></div>'+
+      '<div class="mk-verdict">'+(r.pass?'✅ Sur cette base, tu es au-dessus du seuil':'⚠︎ En dessous du seuil sur cette base')+'</div></div>'+
+    callout("Ces trois épreuves valent 75 points. L'oral (25 points) ne peut pas être noté automatiquement — fais-le dans <b>Examen</b> et demande à un humain de te noter. Le DELF se réussit à <b>50/100</b>, avec au minimum <b>5/25 par épreuve</b>.",!r.pass)+
+    callout("<b>CO et CE sont des notes fiables</b> (QCM objectif). <b>PE est partielle</b> : seuls le format de la fiche, la longueur, la salutation et la formule finale sont vérifiés automatiquement. Le contenu et la grammaire comptent pour l'autre moitié — envoie ton texte à l'IA dans <b>Écriture</b> pour la note complète.")+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+      '<button class="btn" onclick="mkStart()">'+icon('refresh')+' Refaire un examen blanc</button>'+
+      '<button class="btn ghost" onclick="show(\'Examen\')">'+icon('mic')+" Passer à l'oral</button>"+
+      '<button class="btn ghost" onclick="mkReview()">'+icon('book-open')+' Voir les corrections</button></div>'+
+    '<div id="mkReview" style="margin-top:12px"></div></div>';
+}
+function mkReview(){
+  var box=document.getElementById('mkReview');if(!box)return;
+  var out='';
+  [['co',ECOUTE,"Compréhension de l'oral"],['ce',READING,'Compréhension des écrits']].forEach(function(pair){
+    var sec=pair[0],src=pair[1];
+    out+='<h3>'+esc(pair[2])+'</h3>';
+    MK.items[sec].forEach(function(idx,di){
+      var it=src[idx];
+      out+='<div class="card" style="margin:8px 0"><b>'+esc(it.title)+'</b>'+
+        (sec==='co'?'<div class="ec-tr" style="margin-top:8px"><div class="muted" style="font-size:11px;font-weight:800;letter-spacing:.08em;margin-bottom:5px">TRANSCRIPTION</div>'+esc(it.audio)+'</div>':'')+
+        it.q.map(function(qq,qi){
+          var mine=MK.ans[sec+'_'+di+'_'+qi],ok=mine===qq.a;
+          return '<div style="margin-top:8px;font-size:var(--f-sm)"><div class="q">'+(qi+1)+'. '+esc(qq.q)+'</div>'+
+            '<div style="color:'+(ok?'var(--good)':'var(--bad)')+'">'+(ok?'✓':'✗')+' Ta réponse : '+esc(mine!=null?qq.o[mine]:'(rien)')+'</div>'+
+            (ok?'':'<div class="ok">→ Bonne réponse : '+esc(qq.o[qq.a])+'</div>')+'</div>';
+        }).join('')+'</div>';
+    });
+  });
+  box.innerHTML=out;
+}
+TABS['Examen blanc']=function(){
+  if(MK.done&&MK.res)return mkSheet();
+  if(!MK.on){
+    return fhero('award','Examen blanc — conditions réelles',
+      "Les trois épreuves collectives du DELF A1, chronométrées, d'affilée. Pas d'Ask AI, pas de transcription, aucun retour avant la fin. C'est le seul moyen de savoir où tu en es vraiment.")+
+      '<div class="card"><h3 style="margin-top:0">Déroulement</h3>'+
+      '<table class="mk-sheet"><tbody>'+MK_PLAN.map(function(p){
+        return '<tr><td><b>'+esc(p.short)+'</b> — '+esc(p.label)+'</td><td class="muted">'+p.min+' min</td><td class="muted">'+p.n+(p.k==='pe'?' exercices':' documents')+'</td></tr>';
+      }).join('')+'</tbody></table>'+
+      callout("Prévois <b>1 h 20</b> sans interruption. Le chrono tourne par épreuve et passe automatiquement à la suivante quand le temps est écoulé — comme au centre d'examen.")+
+      (PROG.mockLast?'<p class="muted" style="font-size:13px">Dernier essai : <b>'+PROG.mockLast.total+'</b>/75 · CO '+PROG.mockLast.co+' · CE '+PROG.mockLast.ce+' · PE '+PROG.mockLast.pe+'</p>':'')+
+      '<button class="btn" onclick="mkStart()">'+icon('play')+" Commencer l'examen blanc</button></div>";
+  }
+  var p=MK_PLAN[MK.si];
+  return '<div class="mk-head"><div><span class="pill">Épreuve '+(MK.si+1)+'/'+MK_PLAN.length+'</span> <b>'+esc(p.label)+'</b></div>'+
+    '<div class="mk-clock" id="mkClock">'+p.min+':00</div></div>'+
+    mkBody()+
+    '<div class="card" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      '<button class="btn" onclick="mkNext(false)">'+(MK.si<MK_PLAN.length-1?icon('arrow-r')+' Valider et continuer':icon('check')+' Terminer et voir les résultats')+'</button>'+
+      '<button class="btn ghost" onclick="mkQuit()">'+icon('x')+' Abandonner</button>'+
+      '<span class="muted" style="font-size:12px">Tu ne peux pas revenir en arrière.</span></div>';
+};
+function mkRender(){var el=document.querySelector('[data-tab="Examen blanc"]');
+  if(el&&el.classList.contains('active')){el.innerHTML=TABS['Examen blanc']();if(EN)applyEN(el);}}
 TABS['Examen']=()=>`<div class="card"><h2>${icon('award')} Production orale — format DELF A1</h2>
   <p class="muted">L\u2019oral du DELF A1 dure 5 à 7 minutes et se joue en <b>trois parties</b>. Entraîne-les séparément, puis enchaîne-les.</p>
   <div class="po-parts">
@@ -4096,14 +4323,14 @@ const BUCKETS=[
  {id:'Accueil',   icon:'home',  t:['Départ','Mon Profil','Points faibles']},
  {id:'Fondations',icon:'layers',t:['Alphabet','Accents','Sons','Grammaire']},
  {id:'Apprendre', icon:'grad',  t:['Leçons','Anatomie']},
- {id:'Épreuves',icon:'book-open',t:['Écoute','Lecture','Écriture']},
+ {id:'Épreuves',icon:'book-open',t:['Écoute','Lecture','Écriture','Examen blanc']},
  {id:'Pratiquer', icon:'mic',   t:['Chunks','Prononciation','Blocs','Jeux','Conversation','Examen']},
  {id:'Références', icon:'grid',  t:['Vocabulaire','Chiffres & Heure']},
 ];
 const TABIC={'Départ':'home','Mon Profil':'user','Points faibles':'target','Alphabet':'type','Accents':'flag',
  'Sons':'waveform','Grammaire':'book','Leçons':'book-open','Anatomie':'scan','Chunks':'headphones','Prononciation':'mic',
  'Blocs':'layers','Jeux':'grid','Conversation':'message','Examen':'award','Vocabulaire':'grid','Chiffres & Heure':'hash',
- 'Lecture':'book-open','Écriture':'type','Écoute':'headphones'};
+ 'Lecture':'book-open','Écriture':'type','Écoute':'headphones','Examen blanc':'award'};
 const ALLTABS=BUCKETS.flatMap(b=>b.t);
 const nav=document.getElementById('nav'),sub=document.getElementById('subnav'),mainEl=document.querySelector('main');
 ALLTABS.forEach(name=>{const d=document.createElement('div');d.className='tab';d.dataset.tab=name;mainEl.appendChild(d);});
@@ -4137,7 +4364,7 @@ function show(name){
   renderSub(b,name);
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   const t=document.querySelector(`[data-tab="${name}"]`);const first=!t.dataset.loaded;
-  const reload=['Départ','Mon Profil','Leçons','Points faibles','Chunks','Alphabet','Accents','Sons','Jeux','Écoute','Lecture','Écriture'];
+  const reload=['Départ','Mon Profil','Leçons','Points faibles','Chunks','Alphabet','Accents','Sons','Jeux','Écoute','Lecture','Écriture','Examen blanc'];
   if(first||reload.includes(name)){t.innerHTML=TABS[name]();t.dataset.loaded=1;}
   injectFS(t);
   if(name==='Vocabulaire'&&first)initFC();
