@@ -610,6 +610,13 @@
   .w-row{font-size:var(--f-sm);color:var(--bad);font-weight:600}
   .w-row.ok{color:var(--good)}
   @media(max-width:640px){.fiche{grid-template-columns:1fr}}
+  /* ---- production orale (DELF) ---- */
+  .po-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .po-p{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+  .po-p b{display:block;font-size:var(--f-sm);color:var(--ink)}
+  .po-p span{display:block;font-size:11px;color:var(--accent);font-weight:700;margin:3px 0 6px}
+  .po-p p{margin:0 0 10px;font-size:12px;color:var(--muted);line-height:1.55}
+  @media(max-width:760px){.po-parts{grid-template-columns:1fr}}
   .arw{cursor:pointer;border-radius:5px;padding:1px 2px;margin:0 -1px;
     transition:background-color .12s var(--ease),color .12s var(--ease)}
   .arw:hover{background:color-mix(in srgb,var(--fr) 18%,transparent)}
@@ -1201,6 +1208,48 @@ function buildScenes(){
   const n=pget('nom')||'…';
   const acc=(...w)=>w.map(x=>new RegExp('\\b'+x+'\\b','i'));
   return {
+   '\ud83c\udf99 DELF oral · 1. Entretien dirigé':[
+     {who:'instr',text:"Partie 1 — l examinateur te pose des questions simples sur toi. Environ 1 minute, sans préparation."},
+     {who:'bot',text:"Bonjour ! Comment vous appelez-vous ?"},
+     {who:'you',say:'Give your name',accept:acc('appelle','je suis','mon nom'),minWords:3,model:"Je m'appelle "+n+"."},
+     {who:'bot',text:"Quel âge avez-vous ?"},
+     {who:'you',say:'Your age (J ai … ans)',accept:acc('ans'),need:acc('ans'),model:"J'ai "+pget('age')+" ans."},
+     {who:'bot',text:"D'où venez-vous ?"},
+     {who:'you',say:'Where you are from',accept:acc('viens','suis'),need:acc('viens|suis'),minWords:3,model:"Je viens du "+pget('pays')+"."},
+     {who:'bot',text:"Où habitez-vous ?"},
+     {who:'you',say:'Where you live',accept:acc('habite'),need:acc('habite'),minWords:3,model:"J'habite à "+pget('ville')+"."},
+     {who:'bot',text:"Qu'est-ce que vous faites dans la vie ?"},
+     {who:'you',say:'Your job or studies',accept:acc('suis','travaille','etudie','etudiant'),minWords:3,model:pget('metier')+"."},
+     {who:'bot',text:"Quelles langues parlez-vous ?"},
+     {who:'you',say:'Languages you speak',accept:acc('parle'),need:acc('parle'),minWords:3,model:"Je parle "+pget('langues')+"."},
+     {who:'bot',text:"Qu'est-ce que vous aimez faire le week-end ?"},
+     {who:'you',say:'Something you like doing',accept:acc('aime','joue','regarde','ecoute','sors','lis'),minWords:3,model:"J'aime écouter de la musique et sortir avec mes amis."},
+   ],
+   '\ud83c\udf99 DELF oral · 2. Échange d\u2019informations':[
+     {who:'instr',text:"Partie 2 — tu tires des cartes-mots. Pour CHAQUE carte, tu dois POSER une question à l examinateur. C est la partie que les candidats ratent le plus : ici on ne répond pas, on demande."},
+     {who:'bot',text:"Voici vos cartes. Posez-moi une question pour chaque mot."},
+     {who:'you',say:'Carte « NOM » — ask ME my name',accept:acc('comment','quel','quelle','est ce que','vous appelez','votre nom'),need:acc('appelez|nom'),minWords:3,model:"Comment vous appelez-vous ?"},
+     {who:'you',say:'Carte « ÂGE » — ask MY age',accept:acc('quel','quelle','comment','combien','est ce que','avez vous'),need:acc('age'),minWords:3,model:"Quel âge avez-vous ?"},
+     {who:'you',say:'Carte « VILLE » — ask WHERE I live',accept:acc('ou','est ce que','habitez'),need:acc('habitez|habite|ville'),minWords:3,model:"Où est-ce que vous habitez ?"},
+     {who:'you',say:'Carte « PROFESSION » — ask what I DO',accept:acc('quel','quelle','qu est ce que','que','est ce que'),need:acc('faites|travail|profession|metier'),minWords:3,model:"Qu'est-ce que vous faites dans la vie ?"},
+     {who:'you',say:'Carte « LANGUES » — ask which languages I speak',accept:acc('quel','quelles','est ce que','combien'),need:acc('langues|parlez'),minWords:3,model:"Quelles langues parlez-vous ?"},
+     {who:'you',say:'Carte « FAMILLE » — ask about my family',accept:acc('combien','avez vous','est ce que','vous avez','quel'),need:acc('famille|freres|soeurs|enfants'),minWords:3,model:"Est-ce que vous avez des frères et sœurs ?"},
+     {who:'you',say:'Carte « SPORT » — ask if I do sport',accept:acc('est ce que','faites vous','vous faites','quel','aimez'),need:acc('sport'),minWords:3,model:"Est-ce que vous faites du sport ?"},
+     {who:'you',say:'Carte « VACANCES » — ask where I go on holiday',accept:acc('ou','quand','est ce que','allez'),need:acc('vacances'),minWords:3,model:"Où allez-vous en vacances ?"},
+   ],
+   '\ud83c\udf99 DELF oral · 3. Jeu de rôle':[
+     {who:'instr',text:"Partie 3 — une situation de la vie courante. Tu achètes quelque chose. Salue, demande le prix, commande, paie, remercie."},
+     {who:'instr',text:"Situation : tu entres dans une boulangerie. L examinateur est le vendeur."},
+     {who:'bot',text:"Bonjour !"},
+     {who:'you',say:'Greet the shopkeeper back (politely)',accept:acc('bonjour','bonsoir','salut'),minWords:1,model:"Bonjour madame !"},
+     {who:'you',say:'Ask the price of a baguette',accept:acc('combien','prix','coute','ca fait'),need:acc('baguette'),minWords:3,model:"Combien coûte une baguette, s'il vous plaît ?"},
+     {who:'bot',text:"Une baguette, c'est un euro dix."},
+     {who:'you',say:'Order two baguettes and a croissant',accept:acc('voudrais','je prends','donnez moi','deux'),need:acc('croissant'),minWords:4,model:"Je voudrais deux baguettes et un croissant, s'il vous plaît."},
+     {who:'bot',text:"Très bien. Ça fait trois euros vingt."},
+     {who:'you',say:'Hand over the money',accept:acc('voila','tenez','voici'),minWords:1,model:"Voilà, trois euros vingt."},
+     {who:'bot',text:"Merci beaucoup. Bonne journée !"},
+     {who:'you',say:'Thank and say goodbye',accept:acc('merci','au revoir','bonne journee'),need:acc('revoir|journee'),minWords:2,model:"Merci, au revoir !"},
+   ],
    '🎓 Bilan A1 — tout':[
      {who:'bot',text:'Bonjour ! On commence. Comment ça va ?'},
      {who:'you',say:'Say you’re fine + ask back',accept:acc('ca va','bien','merci','tres bien','et toi','et vous'),model:'Ça va bien, merci. Et toi ?'},
@@ -1813,10 +1862,23 @@ function newClock(){const h=(Math.random()*12|0)||12;const mm=[0,5,10,15,20,30,4
 function setHand(id,deg,len){const el=document.getElementById(id);const r=(deg-90)*Math.PI/180;el.setAttribute('x2',(50+len*Math.cos(r)).toFixed(1));el.setAttribute('y2',(50+len*Math.sin(r)).toFixed(1));}
 
 /* ==================== EXAMEN launcher ==================== */
-TABS['Examen']=()=>`<div class="card"><h2>${icon('award')} Bilan A1</h2>
-  <p class="muted">A full spoken checkpoint: greet, introduce yourself, order a coffee, tell the time, describe the weather — timed, with one readiness score. Same flow as Conversation (parle → ⏹ Stop → ✓ Vérifier → Continuer). Misses go to <b>Points faibles</b>.</p>
-  <button class="btn" onclick="startExam()">▶ Commencer le bilan</button>
-  <p class="muted" style="margin-top:8px;font-size:12px">Astuce : remplis <b>Mon Profil</b> d’abord.</p></div>`;
+TABS['Examen']=()=>`<div class="card"><h2>${icon('award')} Production orale — format DELF A1</h2>
+  <p class="muted">L\u2019oral du DELF A1 dure 5 à 7 minutes et se joue en <b>trois parties</b>. Entraîne-les séparément, puis enchaîne-les.</p>
+  <div class="po-parts">
+    <div class="po-p"><b>1 · Entretien dirigé</b><span>~1 min · sans préparation</span><p>L\u2019examinateur te pose des questions simples sur toi : nom, âge, ville, travail, langues, loisirs.</p>
+      <button class="btn ghost" onclick="startPO(1)">${icon('play')} S\u2019entraîner</button></div>
+    <div class="po-p"><b>2 · Échange d\u2019informations</b><span>~2 min · cartes-mots</span><p>Tu tires des mots et tu dois <b>poser une question</b> pour chacun. On ne répond pas ici — on demande. C\u2019est la partie la plus ratée.</p>
+      <button class="btn ghost" onclick="startPO(2)">${icon('play')} S\u2019entraîner</button></div>
+    <div class="po-p"><b>3 · Jeu de rôle</b><span>~2 min · situation</span><p>Une transaction de la vie courante : saluer, demander un prix, commander, payer, remercier.</p>
+      <button class="btn ghost" onclick="startPO(3)">${icon('play')} S\u2019entraîner</button></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+    <button class="btn" onclick="startExam()">${icon('award')} Bilan complet (chronométré)</button>
+  </div>
+  <p class="muted" style="margin-top:10px;font-size:12px">Astuce : remplis <b>Mon Profil</b> d\u2019abord — les modèles utilisent ton vrai nom, ta ville et ton métier.</p></div>`;
+function startPO(part){show('Conversation');const sel=document.getElementById('scene');
+  if(sel){const o=[...sel.options].find(x=>x.value.indexOf('DELF oral \u00b7 '+part)>-1);if(o)sel.value=o.value;}
+  cvStart();}
 function startExam(){show('Conversation');const sel=document.getElementById('scene');if(sel){const o=[...sel.options].find(x=>/Bilan/.test(x.value));if(o)sel.value=o.value;}cvStart();}
 
 /* ==================== POINTS FAIBLES ==================== */
