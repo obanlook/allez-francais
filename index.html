@@ -634,6 +634,27 @@
   .mk-total.fail{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card2))}
   .mk-big{font-size:34px;font-weight:800;color:var(--ink)}
   .mk-verdict{font-weight:700;font-size:var(--f-sm)}
+  /* ---- conjugaison ---- */
+  .cj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+  .cj-cell{display:flex;flex-direction:column;gap:2px;align-items:flex-start;background:var(--card2);
+    border:1px solid var(--line2);border-radius:10px;padding:9px 11px;cursor:pointer;color:var(--ink);
+    font-size:var(--f-md);transition:border-color .12s var(--ease),transform .12s var(--ease)}
+  .cj-cell:hover{border-color:var(--fr);transform:translateY(-1px)}
+  .cj-pro{font-size:11px;color:var(--muted);font-weight:700}
+  .cj-cell b{font-size:var(--f-lg);color:var(--accent)}
+  .cj-q{font-size:var(--f-xl);font-weight:800;margin:12px 0 14px}
+  .cj-pc{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+  .cj-pcrow{display:grid;grid-template-columns:1fr 1.6fr auto;gap:10px;align-items:center;text-align:left;
+    background:var(--card2);border:1px solid var(--line2);border-left:3px solid var(--accent2);
+    border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--ink);font-size:var(--f-sm)}
+  .cj-pcrow.etre{border-left-color:var(--rose)}
+  .cj-pcrow:hover{border-color:var(--fr)}
+  .cj-inf{color:var(--muted);font-weight:700}
+  .cj-aux{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;
+    background:color-mix(in srgb,var(--accent2) 20%,transparent);color:var(--accent2)}
+  .cj-pcrow.etre .cj-aux{background:color-mix(in srgb,var(--rose) 20%,transparent);color:var(--rose)}
+  @media(max-width:640px){.cj-grid{grid-template-columns:repeat(2,1fr)}
+    .cj-pcrow{grid-template-columns:1fr auto;row-gap:4px}}
   .arw{cursor:pointer;border-radius:5px;padding:1px 2px;margin:0 -1px;
     transition:background-color .12s var(--ease),color .12s var(--ease)}
   .arw:hover{background:color-mix(in srgb,var(--fr) 18%,transparent)}
@@ -1060,8 +1081,8 @@ function digitsCount(s){const w=(norm(s).match(/\b(zero|un|une|deux|trois|quatre
 
 /* ==================== PROFILE + PROGRESS ==================== */
 const P=JSON.parse(localStorage.getItem('frprofile')||'{}');
-const pdef={nom:'',pays:'mon pays',ville:'ma ville',langues:'anglais et un peu de français',
-  metier:'Je suis étudiant(e)',age:'vingt-cinq'};
+const pdef={nom:'',pays:'mon pays',ville:'Ixelles',langues:'anglais et un peu de français',
+  metier:"Je suis étudiant en informatique appliquée à la VUB",age:'vingt-cinq'};
 function pget(k){return (P[k]!=null&&P[k]!=='')?P[k]:pdef[k];}
 function psave(){localStorage.setItem('frprofile',JSON.stringify(P));renderConv();cloudSync();}
 const PROG=JSON.parse(localStorage.getItem('frprog')||'{}');
@@ -1225,6 +1246,25 @@ function buildScenes(){
   const n=pget('nom')||'…';
   const acc=(...w)=>w.map(x=>new RegExp('\\b'+x+'\\b','i'));
   return {
+   '\ud83c\udfe8 Réception — hôtel Renaissance':[
+     {who:'instr',text:"Tu es à la réception du Renaissance. Un client arrive. Utilise tes vraies phrases de service."},
+     {who:'bot',text:"Bonjour !"},
+     {who:'you',say:'Greet + welcome them to the hotel',accept:acc('bonjour','bienvenue'),need:acc('bienvenue'),minWords:3,model:"Bonjour, bienvenue à l'hôtel Renaissance."},
+     {who:'bot',text:"Merci. J'ai une réservation au nom de Lefèvre."},
+     {who:'you',say:'Ask how you can help / offer to check',accept:acc('comment','puis je','un instant','je vais'),minWords:3,model:"Un instant, s'il vous plaît. Comment puis-je vous aider ?"},
+     {who:'bot',text:"À quelle heure est le petit-déjeuner ?"},
+     {who:'you',say:'Breakfast is served 7:00 to 10:00',accept:acc('sept','servi','petit dejeuner'),need:acc('dix'),minWords:4,model:"Le petit-déjeuner est servi de sept heures à dix heures."},
+     {who:'bot',text:"Parfait. Et où sont les toilettes ?"},
+     {who:'you',say:'End of the corridor, on the right',accept:acc('fond','couloir','droite'),need:acc('droite'),minWords:4,model:"Les toilettes sont au fond du couloir, à droite."},
+     {who:'bot',text:"Ma chambre est à quel étage ?"},
+     {who:'you',say:'Third floor',accept:acc('troisieme','etage','chambre'),need:acc('troisieme'),minWords:3,model:"Votre chambre est au troisième étage."},
+     {who:'bot',text:"Et l'ascenseur ?"},
+     {who:'you',say:'The lifts are right here',accept:acc('ascenseur','ascenseurs','ici'),need:acc('ici'),minWords:3,model:"Les ascenseurs sont situés juste ici."},
+     {who:'bot',text:"Excusez-moi, est-ce que vous auriez une navette pour l'aéroport demain matin très tôt ?"},
+     {who:'you',say:'Too fast — use the polite pivot (a moment / I speak a little French)',accept:acc('un instant','un peu','collegue','je vais chercher'),minWords:4,model:"Un instant, s'il vous plaît. Je parle un peu français — je vais chercher mon collègue pour vous aider."},
+     {who:'bot',text:"Bien sûr, merci beaucoup !"},
+     {who:'you',say:'Wish them a great day',accept:acc('journee','bonne','excellente'),need:acc('journee'),minWords:2,model:"Passez une excellente journée !"},
+   ],
    '\ud83c\udf99 DELF oral · 1. Entretien dirigé':[
      {who:'instr',text:"Partie 1 — l examinateur te pose des questions simples sur toi. Environ 1 minute, sans préparation."},
      {who:'bot',text:"Bonjour ! Comment vous appelez-vous ?"},
@@ -1653,6 +1693,27 @@ TABS['Sons']=()=>`
 
 /* ==================== GRAMMAIRE ==================== */
 const QUIZ=[
+ // ---- EPFC : accord sujet-verbe + auxiliaire du passe compose ----
+ ["Je ___ étudiant à la VUB.",['suis','es','est'],0,"être : je suis."],
+ ["Nous ___ à Ixelles.",['habitons','habitez','habite'],0,"nous → terminaison -ons."],
+ ["Vous ___ français ?",['parlez','parles','parle'],0,"vous → terminaison -ez."],
+ ["Ils ___ au travail en bus.",['vont','va','allons'],0,"aller : ils vont."],
+ ["Elle ___ le petit-déjeuner à sept heures.",['fait','fais','faites'],0,"faire : il/elle fait."],
+ ["Hier, j'___ travaillé à l'hôtel.",['ai','suis','est'],0,"travailler → auxiliaire AVOIR."],
+ ["J'___ étudié le français hier soir.",['ai','suis','es'],0,"étudier → auxiliaire AVOIR."],
+ ["Je ___ arrivé à huit heures.",['suis','ai','es'],0,"arriver = mouvement → auxiliaire ÊTRE."],
+ ["Elle est ___ à la gare.",['allée','allé','allés'],0,"aller → ÊTRE, et le participe s'accorde : elle est allée."],
+ ["Nous sommes ___ en Belgique en septembre.",['venus','venu','venue'],0,"venir → ÊTRE, accord au pluriel : venus."],
+ // ---- EPFC : interrogation, nombres, connecteurs ----
+ ["___ coûte le billet ?",['Combien','Quel','Où'],0,"Combien = how much."],
+ ["___ heure est-il ?",['Quelle','Quel','Combien'],0,"heure est féminin → Quelle heure."],
+ ["___ se trouve la bibliothèque ?",['Où','Quand','Qui'],0,"Où = where."],
+ ["Il est huit heures ___.",['et demie','et demi','de demie'],0,"demie s'accorde avec heure (féminin)."],
+ ["Le billet coûte ___ euros.",['quatre-vingts','quatre-vingt','quatre vingt'],0,"quatre-vingts prend un S quand rien ne suit."],
+ ["J'aime ça ___ c'est logique.",['parce que','pour que','est-ce que'],0,"parce que = because."],
+ ["Je ___ aime pas le froid.",["n'",'ne','pas'],0,"ne + voyelle → n'aime pas."],
+ ["Je travaille ___ étudiant.",['comme','que','pour'],0,"comme = as (in the role of)."],
+
  ['___ café (the coffee, masc.)',['le','la','les'],0,'café is masculine → le café.'],
  ['___ table (the table, fem.)',['la','le','l’'],0,'table is feminine → la table.'],
  ['___ ami (before a vowel)',['l’','le','la'],0,'Before a vowel: l’ami.'],
@@ -2065,6 +2126,99 @@ function mkReview(){
   });
   box.innerHTML=out;
 }
+/* ==================== CONJUGAISON - the four engine verbs + passe compose ====================
+   EPFC placement leans on two things this app did not drill: getting the present-tense
+   ending right for the subject, and picking the correct auxiliary in the passe compose.
+   Tables for reference, then a randomised drill that mixes both. */
+const CONJ_P=[
+ {v:'être',en:'to be',note:"The identity verb. Nationality, job, description: Je suis étudiant.",
+  f:[['je','suis'],['tu','es'],['il/elle','est'],['nous','sommes'],['vous','êtes'],['ils/elles','sont']]},
+ {v:'avoir',en:'to have',note:"Possession AND age: J'ai vingt-cinq ans - you HAVE years in French.",
+  f:[["j'",'ai'],['tu','as'],['il/elle','a'],['nous','avons'],['vous','avez'],['ils/elles','ont']]},
+ {v:'aller',en:'to go',note:"Also builds the near future: Je vais travailler = I am going to work.",
+  f:[['je','vais'],['tu','vas'],['il/elle','va'],['nous','allons'],['vous','allez'],['ils/elles','vont']]},
+ {v:'faire',en:'to do / to make',note:"Weather, activities, chores: Il fait beau. Je fais du sport.",
+  f:[['je','fais'],['tu','fais'],['il/elle','fait'],['nous','faisons'],['vous','faites'],['ils/elles','font']]},
+];
+const CONJ_PC=[
+ {inf:'étudier',en:'studied',aux:'avoir',form:"J'ai étudié",why:"Most verbs take AVOIR."},
+ {inf:'travailler',en:'worked',aux:'avoir',form:"J'ai travaillé",why:"Most verbs take AVOIR."},
+ {inf:'arriver',en:'arrived',aux:'être',form:'Je suis arrivé(e)',why:"Verb of movement -> ÊTRE, and the participle agrees: arrivée if you are female."},
+ {inf:'aller',en:'went',aux:'être',form:'Je suis allé(e)',why:"Verb of movement -> ÊTRE, participle agrees."},
+ {inf:'venir',en:'came',aux:'être',form:'Je suis venu(e)',why:"Verb of movement -> ÊTRE, participle agrees."},
+];
+let cjMode='table',cjQ=null,cjScore=0,cjN=0,cjPicked=null;
+function cjShuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.random()*(i+1)|0;var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function cjMakeQ(){
+  var pool=[];
+  CONJ_P.forEach(function(v){
+    v.f.forEach(function(fm,i){
+      /* distractors must be DISTINCT strings, not just other rows: faire has an
+         identical je fais / tu fais, which otherwise yields two "correct" options */
+      var others=[];
+      v.f.forEach(function(x){if(x[1]!==fm[1]&&others.indexOf(x[1])<0)others.push(x[1]);});
+      if(others.length<2)CONJ_P.forEach(function(v2){v2.f.forEach(function(x){
+        if(x[1]!==fm[1]&&others.indexOf(x[1])<0)others.push(x[1]);});});
+      cjShuffle(others);
+      pool.push({kind:'forme',q:fm[0]+' ___',hint:'('+v.v+')',a:fm[1],
+                 o:cjShuffle([fm[1],others[0],others[1]]),why:v.v+' : '+fm[0]+' '+fm[1]+'.'});
+    });
+  });
+  CONJ_PC.forEach(function(p){
+    pool.push({kind:'aux',q:'Passé composé de « '+p.inf+' »',hint:'avoir ou être ?',a:p.aux,
+               o:['avoir','être'],why:p.form+' — '+p.why});
+  });
+  return pool[Math.random()*pool.length|0];
+}
+function cjStart(){cjMode='drill';cjScore=0;cjN=0;cjPicked=null;cjQ=cjMakeQ();cjRender();}
+function cjTables(){cjMode='table';cjRender();}
+function cjPick(o){
+  if(cjPicked!=null)return;
+  cjPicked=o;cjN++;
+  if(o===cjQ.a)cjScore++;else addWeak('Conjugaison',cjQ.q+' → '+cjQ.a);
+  PROG.cjBest=Math.max(PROG.cjBest||0,cjScore);progSave();cjRender();
+}
+function cjNext(){cjPicked=null;cjQ=cjMakeQ();cjRender();}
+function cjCard(){
+  if(cjMode==='drill'&&cjQ){
+    var done=cjPicked!=null;
+    return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+      '<h3 style="margin:0">'+icon('zap')+' Exercice</h3>'+
+      '<span class="muted" style="font-size:13px"><b class="ok">'+cjScore+'</b> / '+cjN+'</span></div>'+
+      '<div class="cj-q">'+esc(cjQ.q)+' <span class="muted" style="font-size:14px;font-weight:600">'+esc(cjQ.hint)+'</span></div>'+
+      cjQ.o.map(function(o){
+        var cls='quizopt';
+        if(done){if(o===cjQ.a)cls+=' correct';else if(o===cjPicked)cls+=' wrong';}
+        return '<button class="'+cls+'"'+(done?' disabled':'')+' onclick="cjPick(\''+o.replace(/'/g,"\\'")+'\')">'+esc(o)+'</button>';
+      }).join('')+
+      (done?'<div class="callout" style="margin-top:10px">'+icon(cjPicked===cjQ.a?'check':'bulb')+'<div>'+esc(cjQ.why)+' '+spk(cjQ.why.split(' — ')[0])+'</div></div>':'')+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+        (done?'<button class="btn" onclick="cjNext()">'+icon('arrow-r')+' Suivant</button>':'')+
+        '<button class="btn ghost" onclick="cjTables()">'+icon('grid')+' Voir les tableaux</button></div></div>';
+  }
+  return CONJ_P.map(function(v){
+    return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+      '<h3 style="margin:0">'+esc(v.v)+' <span class="muted" style="font-size:13px;font-weight:600">· '+esc(v.en)+'</span></h3>'+
+      '<button class="say" aria-label="Écouter" onclick="say('+sattr(v.f.map(function(x){return x[0]+' '+x[1];}).join(', '))+',{rate:0.8})">'+SPK+'</button></div>'+
+      '<div class="cj-grid">'+v.f.map(function(fm){
+        return '<button class="cj-cell" onclick="say('+sattr(fm[0]+' '+fm[1])+')"><span class="cj-pro">'+esc(fm[0])+'</span><b>'+esc(fm[1])+'</b></button>';
+      }).join('')+'</div>'+
+      callout(esc(v.note))+'</div>';
+  }).join('')+
+  '<div class="card"><h3 style="margin-top:0">'+icon('clock')+' Passé composé — quel auxiliaire ?</h3>'+
+  '<p class="muted" style="font-size:13px">La question que le test A1 pose toujours. La plupart des verbes prennent <b>avoir</b>. Les verbes de mouvement prennent <b>être</b> — et le participe s\'accorde.</p>'+
+  '<div class="cj-pc">'+CONJ_PC.map(function(p){
+    return '<button class="cj-pcrow'+(p.aux==='être'?' etre':'')+'" onclick="say('+sattr(p.form)+')">'+
+      '<span class="cj-inf">'+esc(p.inf)+'</span><b>'+esc(p.form)+'</b>'+
+      '<span class="cj-aux">'+esc(p.aux)+'</span></button>';
+  }).join('')+'</div></div>'+
+  '<div class="card"><button class="btn" onclick="cjStart()">'+icon('zap')+' Commencer l\'exercice</button>'+
+  (PROG.cjBest?'<span class="muted" style="margin-left:10px;font-size:13px">Record : <b>'+PROG.cjBest+'</b> d\'affilée</span>':'')+'</div>';
+}
+TABS['Conjugaison']=function(){return fhero('layers','Conjugaison — le moteur',
+  "Quatre verbes font tourner la moitié du français : être, avoir, aller, faire. Ajoute le passé composé et son auxiliaire, et tu tiens la grammaire du niveau A1.")+cjCard();};
+function cjRender(){var el=document.querySelector('[data-tab="Conjugaison"]');
+  if(el&&el.classList.contains('active')){el.innerHTML=TABS['Conjugaison']();if(EN)applyEN(el);}}
 TABS['Examen blanc']=function(){
   if(MK.done&&MK.res)return mkSheet();
   if(!MK.on){
@@ -2147,6 +2301,37 @@ TABS['Anatomie']=()=>{
    Method: hear a CHUNK (a glued cluster of sound) → lock it to meaning → repeat it
    until it feels like yours. Accuracy does not matter; the rep matters. */
 const CHUNKS=[
+ // ---- Module 2 : VUB & identite academique (entretien EPFC) ----
+ {c:"Je suis étudiant international.",s:'zhuh-swee-ay-tu-dee-AHN-an-tair-na-syo-NAL',m:'I am an international student.',cat:'🎓 VUB & études',w:'No article before a status in French: never "un étudiant" here.'},
+ {c:"J'étudie la science informatique appliquée à la VUB.",s:'zhay-tu-DEE-la-syanss-an-for-ma-TEEK-a-plee-KAY-a-la-vay-u-BAY',m:'I study applied computer science at VUB.',cat:'🎓 VUB & études',w:'étudier takes a direct object — no preposition before the subject.'},
+ {c:"Ma spécialisation est la santé digitale.",s:'ma-spay-sya-lee-za-SYON-ay-la-san-TAY-dee-zhee-TAL',m:'My specialisation is digital health.',cat:'🎓 VUB & études',w:'Adjective AFTER the noun: santé digitale, not digitale santé.'},
+ {c:"Je commence ma deuxième année de master.",s:'zhuh-ko-MONSS-ma-duh-ZYEM-a-NAY-duh-mas-TAIR',m:"I am starting my second year of Master's.",cat:'🎓 VUB & études',w:'French present covers "I start" and "I am starting" — there is no -ing form.'},
+ {c:"J'apprends le français pour mon avenir professionnel.",s:'zha-PRON-luh-fron-SEH-poor-mon-av-NEER-pro-fay-syo-NEL',m:'I am learning French for my professional future.',cat:'🎓 VUB & études',w:'A ready-made answer to "Pourquoi apprenez-vous le français ?" — the interview always asks.'},
+ // ---- Module 3 : Bruxelles au quotidien ----
+ {c:"J'habite à Ixelles, près du campus.",s:'zha-BEET-a-eek-SEL-preh-du-kom-PUS',m:'I live in Ixelles, near the campus.',cat:'🚇 Bruxelles au quotidien',w:'à + city. près de + le = près DU.'},
+ {c:"Je prends le bus ou le train pour aller au travail.",s:'zhuh-PRON-luh-BUSS-oo-luh-TRAN-poor-a-LAY-o-tra-VUY',m:'I take the bus or the train to go to work.',cat:'🚇 Bruxelles au quotidien',w:'pour + infinitive = in order to. à + le = AU travail.'},
+ {c:"La gare de Bruxelles-Luxembourg est juste à côté.",s:'la-GAR-duh-bru-SEL-luk-som-BOOR-ay-zhust-a-ko-TAY',m:'Brussels-Luxembourg station is right next door.',cat:'🚇 Bruxelles au quotidien',w:'juste à côté = right nearby. Useful for guests at the hotel too.'},
+ {c:"L'hôtel se trouve dans le quartier européen.",s:'lo-TEL-suh-TROOV-don-luh-kar-TYAY-uh-ro-pay-AN',m:'The hotel is in the European Quarter.',cat:'🚇 Bruxelles au quotidien',w:'se trouver = to be located. More natural than "est" for places.'},
+ {c:"Je travaille à temps partiel comme étudiant.",s:'zhuh-tra-VUY-a-ton-par-SYEL-kom-ay-tu-dee-AHN',m:'I work part-time as a student.',cat:'🚇 Bruxelles au quotidien',w:'comme = as. Again no article: comme étudiant.'},
+ // ---- Module 4 : reception, hotel Renaissance ----
+ {c:"Bonjour, bienvenue à l'hôtel Renaissance.",s:'bon-ZHOOR-byan-vuh-NU-a-lo-TEL-ruh-nay-SONSS',m:'Hello, welcome to the Renaissance Hotel.',cat:'🏨 Réception — Renaissance',w:'bienvenue à + place. Your first line of every shift.'},
+ {c:"Comment puis-je vous aider, monsieur ?",s:'ko-MON-pwee-zhuh-voo-zay-DAY-muh-SYUH',m:'How can I help you, sir?',cat:'🏨 Réception — Renaissance',w:'puis-je is the polite form of peux-je. Sounds professional immediately.'},
+ {c:"Passez une excellente journée !",s:'pa-SAY-un-ek-say-LONT-zhoor-NAY',m:'Have a great day!',cat:'🏨 Réception — Renaissance',w:'vous form. Your closing line to every guest.'},
+ {c:"Les ascenseurs sont situés juste ici.",s:'lay-za-son-SUR-son-see-tu-AY-zhust-ee-SEE',m:'The lifts are located right here.',cat:'🏨 Réception — Renaissance',w:'Liaison: les_ascenseurs = "lay-za-son-SUR".'},
+ {c:"Le petit-déjeuner est servi de sept heures à dix heures.",s:'luh-puh-tee-day-zhuh-NAY-ay-sair-VEE-duh-set-UR-a-dee-ZUR',m:'Breakfast is served from 7 to 10.',cat:'🏨 Réception — Renaissance',w:'de … à … = from … to …. The single most asked question at a hotel desk.'},
+ {c:"Les toilettes sont au fond du couloir, à droite.",s:'lay-twa-LET-son-to-FON-du-koo-LWAR-a-DRWAT',m:'The toilets are at the end of the corridor, on the right.',cat:'🏨 Réception — Renaissance',w:'au fond de = at the far end of. toilettes is always plural.'},
+ {c:"Votre chambre est au troisième étage.",s:'votr-SHOMBR-ay-to-trwa-ZYEM-ay-TAZH',m:'Your room is on the third floor.',cat:'🏨 Réception — Renaissance',w:'à + le = AU troisième étage.'},
+ {c:"Un instant, s'il vous plaît. Je parle un peu français.",s:'an-nan-STON-seel-voo-PLEH-zhuh-PARL-an-puh-fron-SEH',m:'One moment please. I speak a little French.',cat:'🏨 Réception — Renaissance',w:'Your safety line. Says it politely and buys you time — never apologise for your level.'},
+ {c:"Je vais chercher mon collègue pour vous aider.",s:'zhuh-veh-shair-SHAY-mon-ko-LEG-poor-voo-zay-DAY',m:'I will get my colleague to help you.',cat:'🏨 Réception — Renaissance',w:'aller + infinitive = near future. The graceful exit when the French gets too fast.'},
+ // ---- Module 5 : structures du test A1 ----
+ {c:"Où se trouve la bibliothèque ?",s:'oo-suh-TROOV-la-bee-blee-o-TEK',m:'Where is the library?',cat:'📝 Test A1 — structures',w:'où + se trouver: the standard "where is …?" the test expects.'},
+ {c:"Quelle heure est-il, s'il vous plaît ?",s:'kel-UR-ay-TEEL-seel-voo-PLEH',m:'What time is it, please?',cat:'📝 Test A1 — structures',w:'heure is feminine → QUELLE heure, with two Ls.'},
+ {c:"Combien ça coûte ?",s:'kom-BYAN-sa-KOOT',m:'How much does it cost?',cat:'📝 Test A1 — structures',w:'The short spoken form. Combien = how much / how many.'},
+ {c:"Il est huit heures et demie.",s:'ee-lay-wee-TUR-ay-duh-MEE',m:'It is half past eight.',cat:'📝 Test A1 — structures',w:'demie agrees with the feminine heure → et demie with an E.'},
+ {c:"Le billet coûte quatre-vingts euros.",s:'luh-bee-YEH-koot-katr-van-ZUH-ro',m:'The ticket costs eighty euros.',cat:'📝 Test A1 — structures',w:'80 = 4×20. quatre-vingts keeps its S when nothing follows it.'},
+ {c:"J'aime la programmation parce que c'est logique.",s:'zhem-la-pro-gra-ma-SYON-parss-kuh-say-lo-ZHEEK',m:'I like programming because it is logical.',cat:'📝 Test A1 — structures',w:'parce que = because. The test loves asking you to justify a preference.'},
+ {c:"Je n'aime pas le froid en Belgique.",s:'zhuh-nem-PA-luh-FRWA-on-bel-ZHEEK',m:'I do not like the cold in Belgium.',cat:'📝 Test A1 — structures',w:'ne … pas wraps the verb. Before a vowel: ne → n\'aime.'},
+
  // 🎯 the casual question shape: sentence + question word at the END
  {c:'Vous payez comment ?',s:'voo-pay-YAY-ko-MON',m:'How are you paying?',cat:'🎯 Question à la fin',w:'The important word (comment) lands LAST — that is the casual French shape.'},
  {c:'Tu t’appelles comment ?',s:'tu-ta-PEL-ko-MON',m:'What’s your name?',cat:'🎯 Question à la fin',w:'Same shape again. Once you own it, you hear it everywhere.'},
@@ -4321,7 +4506,7 @@ function gamesRenderLE(keepFocus){
 
 const BUCKETS=[
  {id:'Accueil',   icon:'home',  t:['Départ','Mon Profil','Points faibles']},
- {id:'Fondations',icon:'layers',t:['Alphabet','Accents','Sons','Grammaire']},
+ {id:'Fondations',icon:'layers',t:['Alphabet','Accents','Sons','Conjugaison','Grammaire']},
  {id:'Apprendre', icon:'grad',  t:['Leçons','Anatomie']},
  {id:'Épreuves',icon:'book-open',t:['Écoute','Lecture','Écriture','Examen blanc']},
  {id:'Pratiquer', icon:'mic',   t:['Chunks','Prononciation','Blocs','Jeux','Conversation','Examen']},
@@ -4330,7 +4515,7 @@ const BUCKETS=[
 const TABIC={'Départ':'home','Mon Profil':'user','Points faibles':'target','Alphabet':'type','Accents':'flag',
  'Sons':'waveform','Grammaire':'book','Leçons':'book-open','Anatomie':'scan','Chunks':'headphones','Prononciation':'mic',
  'Blocs':'layers','Jeux':'grid','Conversation':'message','Examen':'award','Vocabulaire':'grid','Chiffres & Heure':'hash',
- 'Lecture':'book-open','Écriture':'type','Écoute':'headphones','Examen blanc':'award'};
+ 'Lecture':'book-open','Écriture':'type','Écoute':'headphones','Examen blanc':'award','Conjugaison':'layers'};
 const ALLTABS=BUCKETS.flatMap(b=>b.t);
 const nav=document.getElementById('nav'),sub=document.getElementById('subnav'),mainEl=document.querySelector('main');
 ALLTABS.forEach(name=>{const d=document.createElement('div');d.className='tab';d.dataset.tab=name;mainEl.appendChild(d);});
@@ -4364,7 +4549,7 @@ function show(name){
   renderSub(b,name);
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   const t=document.querySelector(`[data-tab="${name}"]`);const first=!t.dataset.loaded;
-  const reload=['Départ','Mon Profil','Leçons','Points faibles','Chunks','Alphabet','Accents','Sons','Jeux','Écoute','Lecture','Écriture','Examen blanc'];
+  const reload=['Départ','Mon Profil','Leçons','Points faibles','Chunks','Alphabet','Accents','Sons','Jeux','Écoute','Lecture','Écriture','Examen blanc','Conjugaison'];
   if(first||reload.includes(name)){t.innerHTML=TABS[name]();t.dataset.loaded=1;}
   injectFS(t);
   if(name==='Vocabulaire'&&first)initFC();
