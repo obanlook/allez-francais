@@ -1099,7 +1099,26 @@ function addWeak(prompt,model){if(!model)return;if(PROG.weak.some(w=>w.model===m
 function clearWeak(m){PROG.weak=PROG.weak.filter(w=>w.model!==m);progSave();}
 function lessonsDonePct(){const t=LESSONS.length;const d=LESSONS.filter(l=>PROG.lessons[l.id]).length;return t?Math.round(d/t*100):0;}
 function chunksPct(){return Math.round(((PROG.mine||[]).length/CHUNKS.length)*100);}
-function overallPct(){const parts=[lessonsDonePct(),chunksPct()];const sv=Object.values(PROG.scenes);if(sv.length)parts.push(sv.reduce((a,b)=>a+b,0)/sv.length);if(PROG.quizBest!=null)parts.push(PROG.quizBest);return Math.round(parts.reduce((a,b)=>a+b,0)/parts.length);}
+/* Coverage-weighted: score counts against EVERY document, not just attempted ones,
+   so the figure rises with both how much you have covered and how well you did. */
+function bankPct(bank,best){var b=PROG[best]||{},got=0,tot=0;
+  bank.forEach(function(it,i){tot+=it.q.length;got+=Math.min(b[i]||0,it.q.length);});
+  return tot?Math.round(got/tot*100):0;}
+function ecoPct(){return bankPct(ECOUTE,'ecoBest');}
+function readPct(){return bankPct(READING,'readBest');}
+function writePct(){return Math.round(Object.keys(PROG.writeDone||{}).length/WRITING.length*100);}
+/* Accuracy, but floored by volume: you need ~30 attempts before this can read 100,
+   otherwise one lucky answer would show a perfect score. */
+function conjPct(){var g=PROG.cjGot||0,t=Math.max(PROG.cjTot||0,30);return Math.min(100,Math.round(g/t*100));}
+function overallPct(){
+  const parts=[lessonsDonePct(),chunksPct()];
+  const sv=Object.values(PROG.scenes);if(sv.length)parts.push(sv.reduce((a,b)=>a+b,0)/sv.length);
+  if(PROG.quizBest!=null)parts.push(PROG.quizBest);
+  if(PROG.cjTot)parts.push(conjPct());
+  if(Object.keys(PROG.ecoBest||{}).length)parts.push(ecoPct());
+  if(Object.keys(PROG.readBest||{}).length)parts.push(readPct());
+  if(Object.keys(PROG.writeDone||{}).length)parts.push(writePct());
+  return Math.round(parts.reduce((a,b)=>a+b,0)/parts.length);}
 function renderStart(){const el=document.querySelector('[data-tab="Départ"]');if(el&&el.dataset.loaded)el.innerHTML=TABS['Départ']();}
 
 const TABS={};
@@ -1122,7 +1141,7 @@ TABS['Départ']=()=>{
     <h2>${icon('target')} Ma progression</h2>
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <div style="font-size:34px;font-weight:800;color:${ov>=60?'var(--good)':ov>0?'var(--accent)':'var(--muted)'}">${ov}%</div>
-      <div style="flex:1;min-width:160px"><div class="muted" style="font-size:12px">Overall (lessons done + conversation + quiz)</div><div class="bar"><i style="width:${ov}%"></i></div></div>
+      <div style="flex:1;min-width:160px"><div class="muted" style="font-size:12px">Moyenne de tous les modules commencés</div><div class="bar"><i style="width:${ov}%"></i></div></div>
     </div>
     <table style="margin-top:10px">
       <tr><th>Zone</th><th style="text-align:right">Progrès</th></tr>
@@ -1131,6 +1150,11 @@ TABS['Départ']=()=>{
       <tr><td>Cartes vues</td><td style="text-align:right">${PROG.fcSeen||0}</td></tr>
       <tr><td>Chunks « à moi »</td><td style="text-align:right"><b class="${chunksPct()>=60?'ok':'warn'}">${(PROG.mine||[]).length}/${CHUNKS.length}</b></td></tr>
       <tr><td>Reps de shadowing (total)</td><td style="text-align:right">${PROG.chunkReps||0}</td></tr>
+      <tr><td>Conjugaison (exactitude)</td><td style="text-align:right">${PROG.cjTot?`<b class="${conjPct()>=60?'ok':'warn'}">${PROG.cjGot||0}/${PROG.cjTot}</b>`:'<span class="muted">—</span>'}</td></tr>
+      <tr><td>Écoute (documents)</td><td style="text-align:right">${Object.keys(PROG.ecoBest||{}).length?`<b class="${ecoPct()>=60?'ok':'warn'}">${ecoPct()}%</b> <span class="muted">· ${Object.keys(PROG.ecoDone||{}).length}/${ECOUTE.length}</span>`:'<span class="muted">—</span>'}</td></tr>
+      <tr><td>Lecture (textes)</td><td style="text-align:right">${Object.keys(PROG.readBest||{}).length?`<b class="${readPct()>=60?'ok':'warn'}">${readPct()}%</b> <span class="muted">· ${Object.keys(PROG.readDone||{}).length}/${READING.length}</span>`:'<span class="muted">—</span>'}</td></tr>
+      <tr><td>Écriture (sujets faits)</td><td style="text-align:right">${Object.keys(PROG.writeDone||{}).length?`<b class="${writePct()>=60?'ok':'warn'}">${Object.keys(PROG.writeDone||{}).length}/${WRITING.length}</b>`:'<span class="muted">—</span>'}</td></tr>
+      <tr><td>Examen blanc (meilleur)</td><td style="text-align:right">${PROG.mockBest?`<b class="${PROG.mockBest>=37.5?'ok':'warn'}">${PROG.mockBest}</b> <span class="muted">/ 75</span>`:'<span class="muted">—</span>'}</td></tr>
       <tr><td>Points faibles</td><td style="text-align:right">${PROG.weak.length?`<b class="warn">${PROG.weak.length}</b>`:'<span class="ok">0 ✓</span>'}</td></tr>
     </table>
   </div>
@@ -2175,7 +2199,9 @@ function cjTables(){cjMode='table';cjRender();}
 function cjPick(o){
   if(cjPicked!=null)return;
   cjPicked=o;cjN++;
-  if(o===cjQ.a)cjScore++;else addWeak('Conjugaison',cjQ.q+' → '+cjQ.a);
+  PROG.cjTot=(PROG.cjTot||0)+1;
+  if(o===cjQ.a){cjScore++;PROG.cjGot=(PROG.cjGot||0)+1;}
+  else addWeak('Conjugaison',cjQ.q+' → '+cjQ.a);
   PROG.cjBest=Math.max(PROG.cjBest||0,cjScore);progSave();cjRender();
 }
 function cjNext(){cjPicked=null;cjQ=cjMakeQ();cjRender();}
@@ -4120,7 +4146,10 @@ function readAnswer(qi,oi){if(readShown)return;readAns[qi]=oi;readSaveSess();gam
 function readCheck(){readShown=true;readSaveSess();
   const p=readPassage();let score=0;p.q.forEach((qq,i)=>{if(readAns[i]===qq.a)score++;});
   PROG.readBest=PROG.readBest||{};PROG.readBest[readI]=Math.max(PROG.readBest[readI]||0,score);
-  PROG.readDone=PROG.readDone||{};PROG.readDone[readI]=true;progSave();gamesRenderLE();
+  PROG.readDone=PROG.readDone||{};PROG.readDone[readI]=true;
+  /* reading misses used to vanish — send them to Points faibles like every other module */
+  p.q.forEach((qq,i)=>{if(readAns[i]!==qq.a)addWeak('Lecture · '+p.title,qq.q+' → '+qq.o[qq.a]);});
+  progSave();gamesRenderLE();
 }
 /* ==================== ASSISTED READING (karaoke) ====================
    Word-level highlight synced to the voice. Primary path = the utterance's own
